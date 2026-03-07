@@ -1,0 +1,48 @@
+import React from "react"
+import { Home, Search, Calendar, Settings } from "lucide-react"
+
+export default function Sidebar() {
+  const menuItems = [
+    { icon: Home, label: "Bảng tin", active: window.location.pathname === '/' || window.location.pathname === '', href: '/' },
+    { icon: Search, label: "Tìm Mentor", active: window.location.pathname === '/search', href: '/search' },
+    { icon: Calendar, label: "Lịch trình của tôi", active: false, href: '#' },
+    { icon: Settings, label: "Cài đặt", active: false, href: '#' },
+  ]
+
+  return (
+    <div className="w-64 shrink-0 hidden md:block space-y-6 sticky top-24">
+      {/* Navigation Menu */}
+      <nav className="space-y-2">
+        {menuItems.map((item, index) => {
+          const Icon = item.icon
+          return (
+            <a
+              key={index}
+              href={item.href}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                item.active 
+                  ? "bg-[#372660] text-white" 
+                  : "text-slate-600 hover:bg-slate-100 hover:text-[#372660]"
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+              {item.label}
+            </a>
+          )
+        })}
+      </nav>
+
+      {/* Mentor CTA */}
+      <div className="bg-gradient-to-br from-[#372660] to-[#503b87] rounded-xl p-5 border border-indigo-900 relative overflow-hidden group shadow-md mt-4">
+        <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8 group-hover:scale-110 transition-transform"></div>
+        <h4 className="text-sm font-bold text-white mb-2 relative z-10">Chia sẻ kiến thức</h4>
+        <p className="text-xs text-indigo-200 mb-4 leading-relaxed relative z-10">
+          Trở thành Mentor để giúp đỡ cộng đồng và gia tăng thu nhập.
+        </p>
+        <a href="/register-mentor" className="block w-full py-2 bg-white text-[#372660] text-sm font-bold text-center rounded-lg shadow-sm hover:bg-slate-50 transition relative z-10">
+          Đăng ký ngay
+        </a>
+      </div>
+    </div>
+  )
+}
