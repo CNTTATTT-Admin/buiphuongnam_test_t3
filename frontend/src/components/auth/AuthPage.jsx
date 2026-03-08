@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { useAuth } from "../../contexts/AuthContext"
@@ -8,31 +8,46 @@ import { useNavigate } from 'react-router-dom'
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
+  const [userName, setUserName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const { login } = useAuth()
+  const [isLoading, setIsLoading] = useState(false)
+  
+  const { login, register } = useAuth()
   const navigate = useNavigate()
 
-  const handleLogin = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    
-    // Quick admin/mentee preset injection mock
-    let loginEmail = email;
-    if (email === 'admin' || email === 'admin@mentormatch.com') loginEmail = 'admin@mentormatch.com';
-    if (email === 'mentee' || email === 'mentee@mentormatch.com') loginEmail = 'mentee@mentormatch.com';
+    setIsLoading(true)
 
-    const result = login(loginEmail, password || 'password123')
-    
-    if (result.success) {
-      if (email === 'admin') {
-         window.location.href = '/admin'; 
+    try {
+      if (isLogin) {
+        const result = await login(userName, password)
+        if (result.success) {
+          if (userName.toLowerCase().includes('admin')) {
+             window.location.href = '/admin'; 
+          } else {
+             navigate('/')
+          }
+        } else {
+          setError(result.message)
+        }
       } else {
-         navigate('/')
+        const result = await register(userName, email, password)
+        if (result.success) {
+          alert('Đăng ký thành công! Vui lòng đăng nhập.')
+          setIsLogin(true)
+        } else {
+          setError(result.message)
+        }
       }
-    } else {
-      setError(result.message)
+    } catch (err) {
+      console.error(err)
+      setError('Đã xảy ra lỗi hệ thống.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -58,51 +73,57 @@ export default function AuthPage() {
         <div className="flex w-full mb-8 border-b border-slate-200">
           <button 
             type="button"
-            onClick={() => setIsLogin(true)}
+            onClick={() => { setIsLogin(true); setError(''); }}
             className={`flex-1 pb-3 text-sm font-semibold transition-all ${isLogin ? 'text-[#372660] border-b-2 border-[#372660]' : 'text-slate-500 hover:text-slate-700'}`}
           >
             Đăng nhập
           </button>
           <button 
             type="button"
-            onClick={() => setIsLogin(false)}
+            onClick={() => { setIsLogin(false); setError(''); }}
             className={`flex-1 pb-3 text-sm font-semibold transition-all ${!isLogin ? 'text-[#372660] border-b-2 border-[#372660]' : 'text-slate-500 hover:text-slate-700'}`}
           >
             Đăng ký
           </button>
         </div>
 
-        {error && <div className="mb-4 p-3 bg-red-100 text-red-700 text-sm rounded-lg">{error}</div>}
+        {error && <div className="mb-4 p-3 bg-red-50 border border-red-100 text-red-600 text-sm font-medium rounded-lg text-center break-words">{error}</div>}
 
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleSubmit}>
           {/* Form Fields */}
           <div className="space-y-4">
+            
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700">Tên đăng nhập (Username)</label>
+              <div className="relative">
+                <User className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <Input 
+                  type="text" 
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  placeholder="Nhập username của bạn..." 
+                  className="pl-10 bg-slate-50 border-slate-200 focus-visible:ring-[#372660]"
+                  required
+                />
+              </div>
+            </div>
+
             {!isLogin && (
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Họ và tên</label>
+                <label className="text-sm font-medium text-slate-700">Email</label>
                 <div className="relative">
+                  <Mail className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                   <Input 
-                    type="text" 
-                    placeholder="Nhập họ và tên" 
-                    className="pl-3 bg-slate-50 border-slate-200 focus-visible:ring-[#372660]"
+                    type="email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@example.com" 
+                    className="pl-10 bg-slate-50 border-slate-200 focus-visible:ring-[#372660]"
+                    required
                   />
                 </div>
               </div>
             )}
-            
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <Input 
-                  type="text" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com hoặc 'admin', 'mentee'" 
-                  className="pl-10 bg-slate-50 border-slate-200 focus-visible:ring-[#372660]"
-                />
-              </div>
-            </div>
 
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
@@ -117,6 +138,7 @@ export default function AuthPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••" 
                   className="pl-10 pr-10 bg-slate-50 border-slate-200 tracking-widest font-medium focus-visible:ring-[#372660]"
+                  required
                 />
                 <button 
                   type="button"
@@ -130,8 +152,8 @@ export default function AuthPage() {
           </div>
 
           {/* Main Submit Button */}
-          <Button type="submit" className="w-full mt-6 bg-[#372660] hover:bg-[#2b1d4c] text-white py-6 rounded-xl font-semibold text-base transition-colors shadow-md shadow-[#372660]/20">
-            {isLogin ? 'Đăng nhập' : 'Tạo tài khoản'}
+          <Button type="submit" disabled={isLoading} className="w-full mt-6 bg-[#372660] hover:bg-[#2b1d4c] text-white py-6 rounded-xl font-semibold text-base transition-colors shadow-md shadow-[#372660]/20 disabled:opacity-70 disabled:cursor-not-allowed">
+            {isLoading ? 'Đang xử lý...' : (isLogin ? 'Đăng nhập' : 'Tạo tài khoản')}
           </Button>
         </form>
 
