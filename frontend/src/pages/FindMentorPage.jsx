@@ -1,11 +1,49 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import FilterSidebar from "../components/search/FilterSidebar"
 import MentorListHeader from "../components/search/MentorListHeader"
 import MentorSearchResultCard from "../components/search/MentorSearchResultCard"
 import Pagination from "../components/search/Pagination"
-import { MOCK_SEARCH_MENTORS } from "../data/mockData"
+import { userService } from "../services/userService"
+import { Loader2 } from "lucide-react"
 
 export default function FindMentorPage() {
+  const [mentors, setMentors] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchMentors = async () => {
+      try {
+        setLoading(true)
+        const res = await userService.getMentors()
+        if (res.code === 1000) {
+          // Map backend UserResponse to match MentorSearchResultCard props natively
+          const mappedMentors = res.result.map(user => ({
+            id: user.id,
+            name: user.fullName || user.userName,
+            avatar: user.avatarUrl || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.fullName || user.userName),
+            role: "Chuyên gia / Mentor", // Placeholder
+            price: "500.000đ", // Placeholder 
+            rating: 5.0, // Placeholder
+            students: 0, // Placeholder
+            tags: ["Java", "Spring Boot", "React"], // Placeholder
+            description: "Mentor nhiệt huyết trên hệ thống MentorMatch.",
+            responseTime: "Phản hồi trong 2h", // Placeholder
+            availability: "Sẵn sàng", // Placeholder
+            isOnline: user.isActive,
+            isVerified: true
+          }))
+          setMentors(mappedMentors)
+        }
+      } catch (err) {
+        console.error("Failed to load mentors", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchMentors()
+  }, [])
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row gap-8 max-w-[1400px] mx-auto">
@@ -15,15 +53,25 @@ export default function FindMentorPage() {
         
         {/* Main Search Results Area */}
         <div className="flex-1 min-w-0">
-          <MentorListHeader totalResults={124} />
+          <MentorListHeader totalResults={mentors.length} />
           
           <div className="space-y-6">
-            {MOCK_SEARCH_MENTORS.map((mentor) => (
-              <MentorSearchResultCard key={mentor.id} mentor={mentor} />
-            ))}
+            {loading ? (
+               <div className="flex justify-center p-12">
+                 <Loader2 className="w-8 h-8 animate-spin text-[#372660]" />
+               </div>
+            ) : mentors.length === 0 ? (
+               <div className="text-center py-12 text-slate-500 bg-white rounded-xl border border-slate-100 shadow-sm">
+                 Không tìm thấy Mentor nào
+               </div>
+            ) : (
+              mentors.map((mentor) => (
+                <MentorSearchResultCard key={mentor.id} mentor={mentor} />
+              ))
+            )}
           </div>
 
-          <Pagination />
+          {!loading && mentors.length > 0 && <Pagination />}
         </div>
         
       </div>

@@ -32,8 +32,12 @@ public class UserController {
         return ResponseEntity.ok(userService.getAll());
     }
 
+    @GetMapping("/mentors")
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getMentors() {
+        return ResponseEntity.ok(userService.getMentors());
+    }
+
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UserResponse>> getById(@PathVariable Integer id) {
         return ResponseEntity.ok(userService.getById(id));
     }

@@ -10,6 +10,7 @@ import java.util.List;
 public interface UserService {
     ApiResponse<UserResponse> create(UserCreationRequest request);
     ApiResponse<List<UserResponse>> getAll();
+    ApiResponse<List<UserResponse>> getMentors();
     ApiResponse<UserResponse> getById(Integer id);
     ApiResponse<UserResponse> update(Integer id, UserUpdateRequest request);
     ApiResponse<Void> delete(Integer id);

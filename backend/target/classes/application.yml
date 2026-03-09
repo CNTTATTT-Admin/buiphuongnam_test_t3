@@ -23,3 +23,8 @@ app:
   jwt:
     secret: "3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b" # At least 256-bit key for HMAC-SHA256
     expiration: 3600000  #1 hours in milliseconds
+  
+  cloudinary:
+    cloud_name: dhz3ngdeg # Replace with your Cloudinary cloud name
+    api_key: 416376455625773 # Replace with your Cloudinary API key
+    api_secret: 1ALNNm10-bDmv41SFM_20J-5H3A # Replace with your Cloudinary API secret

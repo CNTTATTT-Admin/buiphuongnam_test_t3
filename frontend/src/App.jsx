@@ -13,24 +13,7 @@ import ProfileSettingsPage from './pages/ProfileSettingsPage'
 import MentorRegistrationPage from './pages/MentorRegistrationPage'
 import AdminLayout from './layouts/AdminLayout'
 import AdminDashboard from './pages/admin/AdminDashboard'
-import { MOCK_POSTS } from './data/mockData'
-
-function HomeFeed() {
-  return (
-    <div className="flex gap-8 justify-center max-w-7xl mx-auto">
-      <Sidebar />
-      <div className="flex-1 max-w-2xl min-w-0">
-        <CreatePost />
-        <div className="space-y-6">
-          {MOCK_POSTS.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </div>
-      </div>
-      <RightSidebar />
-    </div>
-  )
-}
+import FeedPage from './pages/FeedPage'
 
 // User App Layout (with top Navbar)
 function UserLayout({ children }) {
@@ -50,7 +33,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           {/* User Routes */}
-          <Route path="/" element={<UserLayout><div className="container mx-auto px-4 py-8"><HomeFeed /></div></UserLayout>} />
+          <Route path="/" element={<UserLayout><div className="container mx-auto px-4 py-8"><FeedPage /></div></UserLayout>} />
           <Route path="/auth" element={<UserLayout><AuthPage /></UserLayout>} />
           <Route path="/login" element={<UserLayout><AuthPage /></UserLayout>} />
           <Route path="/search" element={<UserLayout><FindMentorPage /></UserLayout>} />

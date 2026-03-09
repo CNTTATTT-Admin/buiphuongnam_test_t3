@@ -70,6 +70,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public ApiResponse<List<UserResponse>> getMentors() {
+        List<UserResponse> mentors = userRepository.findByRolesName("ROLE_MENTOR").stream()
+                .map(this::toUserResponse)
+                .collect(Collectors.toList());
+
+        return ApiResponse.<List<UserResponse>>builder().result(mentors).build();
+    }
+
+    @Override
     public ApiResponse<UserResponse> getById(Integer id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
