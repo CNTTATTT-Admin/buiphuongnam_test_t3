@@ -1,0 +1,41 @@
+import api from './api';
+
+const profileService = {
+  getProfile: async () => {
+    try {
+      const response = await api.get('/profiles/me');
+      return response;
+    } catch (error) {
+      throw error.response?.data || { message: 'Network error or server unavailable' };
+    }
+  },
+
+  updateBasicProfile: async (profileData) => {
+    try {
+      const response = await api.put('/profiles/me', profileData);
+      return response;
+    } catch (error) {
+      throw error.response?.data || { message: 'Network error or server unavailable' };
+    }
+  },
+
+  updateMentorProfile: async (mentorData) => {
+    try {
+      const response = await api.put('/profiles/mentor/me', mentorData);
+      return response;
+    } catch (error) {
+      throw error.response?.data || { message: 'Network error or server unavailable' };
+    }
+  },
+
+  updateMenteeProfile: async (menteeData) => {
+    try {
+      const response = await api.put('/profiles/mentee/me', menteeData);
+      return response;
+    } catch (error) {
+      throw error.response?.data || { message: 'Network error or server unavailable' };
+    }
+  }
+};
+
+export default profileService;

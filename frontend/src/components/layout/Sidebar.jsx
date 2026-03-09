@@ -1,12 +1,37 @@
-import React from "react"
+import React, { useEffect, useState } from "react"
 import { Home, Search, Calendar, Settings } from "lucide-react"
+import { useAuth } from "../../contexts/AuthContext"
+import profileService from "../../services/profileService"
 
 export default function Sidebar() {
+  const { user } = useAuth()
+  const [isMentor, setIsMentor] = useState(user?.role === "mentor")
+
+  useEffect(() => {
+    // If the frontend login dummy didn't catch the role accurately, try fetching from backend
+    const checkRole = async () => {
+      try {
+        const response = await profileService.getProfile()
+        if (response.code === 1000 && response.result.roles) {
+          const hasMentorRole = response.result.roles.includes("ROLE_MENTOR")
+          setIsMentor(hasMentorRole)
+        }
+      } catch (error) {
+        console.error("Failed to check roles in Sidebar", error)
+      }
+    }
+
+    if (user && user.role !== "mentor") {
+        checkRole()
+    }
+  }, [user])
+
   const menuItems = [
     { icon: Home, label: "Bảng tin", active: window.location.pathname === '/' || window.location.pathname === '', href: '/' },
     { icon: Search, label: "Tìm Mentor", active: window.location.pathname === '/search', href: '/search' },
-    { icon: Calendar, label: "Lịch trình của tôi", active: false, href: '#' },
-    { icon: Settings, label: "Cài đặt", active: false, href: '#' },
+    // Only show "Lịch dạy" if user is a mentor
+    ...(isMentor ? [{ icon: Calendar, label: "Lịch dạy", active: window.location.pathname === '/schedule', href: '/schedule' }] : []),
+    { icon: Settings, label: "Cài đặt", active: window.location.pathname === '/settings', href: '/settings' },
   ]
 
   return (
@@ -16,12 +41,12 @@ export default function Sidebar() {
         {menuItems.map((item, index) => {
           const Icon = item.icon
           return (
-            <a
+             <a
               key={index}
               href={item.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                 item.active 
-                  ? "bg-[#372660] text-white" 
+                  ? "bg-[#372660] text-white shadow-sm" 
                   : "text-slate-600 hover:bg-slate-100 hover:text-[#372660]"
               }`}
             >
@@ -32,17 +57,19 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Mentor CTA */}
-      <div className="bg-gradient-to-br from-[#372660] to-[#503b87] rounded-xl p-5 border border-indigo-900 relative overflow-hidden group shadow-md mt-4">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8 group-hover:scale-110 transition-transform"></div>
-        <h4 className="text-sm font-bold text-white mb-2 relative z-10">Chia sẻ kiến thức</h4>
-        <p className="text-xs text-indigo-200 mb-4 leading-relaxed relative z-10">
-          Trở thành Mentor để giúp đỡ cộng đồng và gia tăng thu nhập.
-        </p>
-        <a href="/register-mentor" className="block w-full py-2 bg-white text-[#372660] text-sm font-bold text-center rounded-lg shadow-sm hover:bg-slate-50 transition relative z-10">
-          Đăng ký ngay
-        </a>
-      </div>
+      {/* Mentor CTA - Hide if they are already a mentor */}
+      {!isMentor && (
+        <div className="bg-gradient-to-br from-[#372660] to-[#503b87] rounded-xl p-5 border border-indigo-900 relative overflow-hidden group shadow-md mt-4">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8 group-hover:scale-110 transition-transform"></div>
+          <h4 className="text-sm font-bold text-white mb-2 relative z-10">Chia sẻ kiến thức</h4>
+          <p className="text-xs text-indigo-200 mb-4 leading-relaxed relative z-10">
+            Trở thành Mentor để giúp đỡ cộng đồng và gia tăng thu nhập.
+          </p>
+          <a href="/register-mentor" className="block w-full py-2 bg-white text-[#372660] text-sm font-bold text-center rounded-lg shadow-sm hover:bg-slate-50 transition relative z-10">
+            Đăng ký ngay
+          </a>
+        </div>
+      )}
     </div>
   )
 }

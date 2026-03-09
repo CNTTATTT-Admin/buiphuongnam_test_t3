@@ -12,17 +12,9 @@ export default function RegistrationSidebar() {
       <div className="mb-auto">
         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 px-2">Cài đặt tài khoản</p>
         <div className="space-y-1 w-full">
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-            <User className="w-4 h-4" />
-            Thông tin cá nhân
-          </button>
           <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-[#372660]/10 text-[#372660] transition-colors">
             <Briefcase className="w-4 h-4" />
-            Hồ sơ Mentor
-          </button>
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-            <Lock className="w-4 h-4" />
-            Đổi mật khẩu
+            Đăng kí Mentor
           </button>
         </div>
       </div>

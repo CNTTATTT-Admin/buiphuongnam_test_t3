@@ -4,20 +4,48 @@ import { useAuth } from "../contexts/AuthContext"
 import SettingsSidebar from "../components/profile/SettingsSidebar"
 import BasicInfoForm from "../components/profile/BasicInfoForm"
 import MentorSettingsForm from "../components/profile/MentorSettingsForm"
+import profileService from "../services/profileService"
 
 export default function ProfileSettingsPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState("profile")
+  const [profileData, setProfileData] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   // Protect route
   useEffect(() => {
     if (!user && !localStorage.getItem('mentormatch_user')) {
       navigate('/login')
+    } else {
+      fetchProfile()
     }
   }, [user, navigate])
 
-  if (!user) return null; // Prevent flash
+  const fetchProfile = async () => {
+    try {
+      setIsLoading(true)
+      const res = await profileService.getProfile()
+      if (res.code === 1000) {
+        setProfileData(res.result)
+      }
+    } catch (error) {
+      console.error("Lỗi khi tải dữ liệu cấu hình:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Refresh data handler after saving forms
+  const handleProfileUpdate = () => {
+    fetchProfile()
+  }
+
+  if (!user || isLoading) return (
+     <div className="min-h-screen flex items-center justify-center">
+       <div className="w-8 h-8 border-4 border-[#372660] border-t-transparent rounded-full animate-spin"></div>
+     </div>
+  ); // Prevent flash / loading state
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl font-sans">
@@ -32,8 +60,10 @@ export default function ProfileSettingsPage() {
         <div className="flex-1 w-full min-w-0">
           {activeTab === "profile" && (
             <div className="animate-in fade-in duration-300">
-              <BasicInfoForm />
-              {user.role === "mentor" && <MentorSettingsForm />}
+              <BasicInfoForm profile={profileData} onUpdate={handleProfileUpdate} />
+              {(user.role === "mentor" || profileData?.roles?.includes("ROLE_MENTOR")) && (
+                 <MentorSettingsForm profile={profileData} onUpdate={handleProfileUpdate} />
+              )}
             </div>
           )}
           

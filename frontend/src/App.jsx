@@ -14,6 +14,7 @@ import MentorRegistrationPage from './pages/MentorRegistrationPage'
 import AdminLayout from './layouts/AdminLayout'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import FeedPage from './pages/FeedPage'
+import MentorSchedulePage from './pages/MentorSchedulePage'
 
 // User App Layout (with top Navbar)
 function UserLayout({ children }) {
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/search" element={<UserLayout><FindMentorPage /></UserLayout>} />
           <Route path="/mentor/:id" element={<UserLayout><MentorProfilePage /></UserLayout>} />
           <Route path="/settings" element={<UserLayout><ProfileSettingsPage /></UserLayout>} />
+          <Route path="/schedule" element={<UserLayout><div className="container mx-auto px-4 py-8"><div className="flex gap-8"><Sidebar /><div className="flex-1"><MentorSchedulePage /></div></div></div></UserLayout>} />
           <Route path="/register-mentor" element={<UserLayout><MentorRegistrationPage /></UserLayout>} />
           
           {/* Admin Routes */}

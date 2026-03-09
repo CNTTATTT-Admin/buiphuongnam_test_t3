@@ -18,4 +18,6 @@ public class PostResponse {
     private String content;
     private List<String> imageUrls;
     private LocalDateTime createdAt;
+    private Integer likeCount;
+    private Boolean isLiked;
 }

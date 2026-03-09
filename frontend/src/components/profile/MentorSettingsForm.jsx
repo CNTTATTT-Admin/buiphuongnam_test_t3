@@ -1,11 +1,29 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { ShieldAlert, Plus, X } from "lucide-react"
 import { Input } from "../ui/input"
+import profileService from "../../services/profileService"
 
-export default function MentorSettingsForm() {
-  const [skills, setSkills] = useState(["Java", "Spring Boot", "System Design"])
+export default function MentorSettingsForm({ profile, onUpdate }) {
+  const [formData, setFormData] = useState({
+    title: "",
+    bio: "",
+    yearsOfExperience: 0
+  })
+  const [skills, setSkills] = useState([])
   const [newSkill, setNewSkill] = useState("")
-  const [price, setPrice] = useState("200000")
+  const [isSaving, setIsSaving] = useState(false)
+  const [message, setMessage] = useState(null)
+
+  useEffect(() => {
+    if (profile && profile.mentorProfile) {
+      setFormData({
+        title: profile.mentorProfile.title || "",
+        bio: profile.mentorProfile.bio || "",
+        yearsOfExperience: profile.mentorProfile.yearsOfExperience || 0
+      })
+      setSkills(profile.mentorProfile.skills || [])
+    }
+  }, [profile])
 
   const handleAddSkill = (e) => {
     if (e.key === 'Enter' && newSkill.trim() && !skills.includes(newSkill.trim())) {
@@ -19,9 +37,35 @@ export default function MentorSettingsForm() {
     setSkills(skills.filter(s => s !== skillToRemove))
   }
 
-  const handleSave = (e) => {
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  const handleSave = async (e) => {
     e.preventDefault()
-    alert("Đã lưu thiết lập Mentor!")
+    setIsSaving(true)
+    setMessage(null)
+
+    try {
+      const result = await profileService.updateMentorProfile({
+        title: formData.title,
+        bio: formData.bio,
+        yearsOfExperience: parseInt(formData.yearsOfExperience) || 0,
+        skills: skills,
+        certificates: profile?.mentorProfile?.certificates || [] // Preserve existing certs for now
+      })
+      if (result.code === 1000) {
+        setMessage({ type: 'success', text: 'Cập nhật thiết lập Mentor thành công!' })
+        if (onUpdate) onUpdate()
+      } else {
+         setMessage({ type: 'error', text: result.message || 'Cập nhật thất bại' })
+      }
+    } catch (error) {
+      console.error(error)
+      setMessage({ type: 'error', text: 'Lỗi máy chủ khi cập nhật thiết lập Mentor' })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -40,19 +84,53 @@ export default function MentorSettingsForm() {
           </div>
         </div>
 
+        {message && (
+          <div className={`mb-6 p-3 text-sm rounded-lg font-medium border ${
+            message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'
+          }`}>
+            {message.text}
+          </div>
+        )}
+
         <form onSubmit={handleSave} className="space-y-6">
-          <div className="space-y-1.5 max-w-sm">
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wide">Mức giá / 1 giờ học (VNĐ)</label>
-            <div className="relative">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wide">Chức danh (*)</label>
               <Input 
-                type="number"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                className="bg-slate-50 border-slate-200 focus-visible:ring-amber-500 font-bold text-lg text-slate-900"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                placeholder="VD: Senior Frontend Engineer"
+                required
+                className="bg-slate-50 border-slate-200 focus-visible:ring-amber-500"
               />
-              <span className="absolute right-4 top-2.5 text-slate-400 font-semibold text-sm">VNĐ</span>
             </div>
-            <p className="text-[11px] text-slate-400 mt-1">Nền tảng sẽ thu chiết khấu 10% trên mỗi giao dịch thành công.</p>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wide">Năm kinh nghiệm</label>
+              <div className="relative">
+                <Input 
+                  type="number"
+                  name="yearsOfExperience"
+                  value={formData.yearsOfExperience}
+                  onChange={handleChange}
+                  min="0"
+                  className="bg-slate-50 border-slate-200 focus-visible:ring-amber-500 font-bold text-lg text-slate-900 pr-12"
+                />
+                <span className="absolute right-4 top-2.5 text-slate-400 font-semibold text-sm">Năm</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-700 uppercase tracking-wide">Giới thiệu bản thân (Bio)</label>
+            <textarea 
+              name="bio"
+              value={formData.bio}
+              onChange={handleChange}
+              rows={4}
+              placeholder="Chia sẻ về kinh nghiệm làm việc và định hướng giảng dạy của bạn..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
+            ></textarea>
           </div>
 
           <div className="space-y-3">
@@ -80,8 +158,8 @@ export default function MentorSettingsForm() {
           </div>
 
           <div className="flex justify-end pt-4 border-t border-slate-100">
-            <button type="submit" className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm">
-              Lưu thiết lập Mentor
+            <button type="submit" disabled={isSaving} className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm disabled:opacity-70 disabled:cursor-not-allowed">
+              {isSaving ? 'Đang lưu...' : 'Lưu thiết lập Mentor'}
             </button>
           </div>
         </form>

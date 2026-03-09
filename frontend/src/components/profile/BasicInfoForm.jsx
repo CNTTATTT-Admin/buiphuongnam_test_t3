@@ -1,26 +1,58 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useAuth } from "../../contexts/AuthContext"
 import { Camera, CheckCircle } from "lucide-react"
 import { Input } from "../ui/input"
+import profileService from "../../services/profileService"
 
-export default function BasicInfoForm() {
+export default function BasicInfoForm({ profile, onUpdate }) {
   const { user } = useAuth()
   const [formData, setFormData] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    phone: "0987654321",
-    bio: user?.role === "mentor" 
-      ? "Xin chào! Tôi là Senior Backend Engineer với hơn 5 năm kinh nghiệm..." 
-      : "Sinh viên ĐH Bách Khoa đam mê công nghệ.",
+    name: "",
+    email: "",
+    phone: "",
+    avatar: ""
   })
+  const [isSaving, setIsSaving] = useState(false)
+  const [message, setMessage] = useState(null)
+
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        name: profile.fullName || profile.userName || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+        avatar: profile.avatarUrl || `https://i.pravatar.cc/150?u=${profile.userName}`
+      })
+    }
+  }, [profile])
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault()
-    alert("Đã lưu thông tin cơ bản!")
+    setIsSaving(true)
+    setMessage(null)
+
+    try {
+      const result = await profileService.updateBasicProfile({
+        fullName: formData.name,
+        phone: formData.phone,
+        avatarUrl: formData.avatar
+      })
+      if (result.code === 1000) {
+        setMessage({ type: 'success', text: 'Cập nhật thông tin cơ bản thành công!' })
+        if (onUpdate) onUpdate()
+      } else {
+        setMessage({ type: 'error', text: result.message || 'Cập nhật thất bại' })
+      }
+    } catch (error) {
+      console.error(error)
+      setMessage({ type: 'error', text: 'Lỗi máy chủ khi cập nhật thông tin' })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -29,11 +61,19 @@ export default function BasicInfoForm() {
         Thông tin Cơ bản
       </h3>
 
+      {message && (
+        <div className={`mb-6 p-3 text-sm rounded-lg font-medium border ${
+          message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'
+        }`}>
+          {message.text}
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row gap-8 items-start mb-8">
         <div className="shrink-0 flex flex-col items-center gap-3">
           <div className="relative group cursor-pointer">
             <img 
-              src={user?.avatar || "https://i.pravatar.cc/150"} 
+              src={formData.avatar} 
               alt="Avatar" 
               className="w-24 h-24 rounded-full object-cover border-4 border-slate-50 shadow-sm group-hover:opacity-80 transition-opacity"
             />
@@ -47,11 +87,12 @@ export default function BasicInfoForm() {
         <form onSubmit={handleSave} className="flex-1 w-full space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wide">Họ và Tên</label>
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wide">Họ và Tên (*)</label>
               <Input 
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
+                required
                 className="bg-slate-50 border-slate-200 focus-visible:ring-[#372660]"
               />
             </div>
@@ -70,7 +111,7 @@ export default function BasicInfoForm() {
             <label className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2">
               Email
               <span className="bg-emerald-100 text-emerald-700 text-[10px] px-1.5 py-0.5 rounded font-bold inline-flex items-center gap-1">
-                <CheckCircle className="w-3 h-3" /> Đã xác thực
+                <CheckCircle className="w-3 h-3" /> Kiểm tra
               </span>
             </label>
             <Input 
@@ -82,20 +123,9 @@ export default function BasicInfoForm() {
             <p className="text-[11px] text-slate-400 mt-1">Để thay đổi email, vui lòng liên hệ CSKH.</p>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wide">Giới thiệu ngắn (Bio)</label>
-            <textarea 
-              name="bio"
-              value={formData.bio}
-              onChange={handleChange}
-              rows={4}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#372660] resize-none"
-            ></textarea>
-          </div>
-
           <div className="flex justify-end pt-4">
-            <button type="submit" className="bg-[#372660] hover:bg-[#2b1d4c] text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm">
-              Lưu thay đổi
+            <button type="submit" disabled={isSaving} className="bg-[#372660] hover:bg-[#2b1d4c] text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm disabled:opacity-70 disabled:cursor-not-allowed">
+              {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
             </button>
           </div>
         </form>

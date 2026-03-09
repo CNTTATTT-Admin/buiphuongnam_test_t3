@@ -14,10 +14,12 @@ export default function Navbar() {
         {/* Logo */}
         <div className="flex items-center gap-2 w-64 shrink-0">
           <div className="flex items-center gap-1 text-primary">
+            <a href="/">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z" />
             </svg>
             <span className="text-xl font-bold">MentorMatch</span>
+            </a>
           </div>
         </div>
 

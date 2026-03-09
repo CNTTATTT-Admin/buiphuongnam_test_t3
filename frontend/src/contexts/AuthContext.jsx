@@ -19,9 +19,18 @@ export function AuthProvider({ children }) {
       const response = await authService.login(userName, password);
       if (response && response.code === 1000 && response.result && response.result.authenticated) {
         // Extract basic data (since the API returns `token` and `authenticated` inside `result`)
-        // We will mock the user profile data based on username for now until a /me API exists
         const token = response.result.token;
-        const role = userName.toLowerCase().includes('admin') ? 'admin' : 'mentee';
+        let role = 'mentee';
+        
+        // For testing purposes: if username contains 'men' but not 'mentee', make them a mentor
+        if (userName.toLowerCase().includes('admin')) {
+          role = 'admin';
+        } else if (userName.toLowerCase().includes('mentor')) {
+          role = 'mentor';
+        } else if (userName.toLowerCase() === 'nam2' || userName.toLowerCase() === 'nam') {
+            // Also defaulting this specific test user to mentor so they can see the settings
+            role = 'mentor';
+        }
         
         const userData = {
           id: userName,

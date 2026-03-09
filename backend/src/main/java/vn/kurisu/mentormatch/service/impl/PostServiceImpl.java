@@ -17,6 +17,7 @@ import vn.kurisu.mentormatch.repository.UserRepository;
 import vn.kurisu.mentormatch.service.CloudinaryService;
 import vn.kurisu.mentormatch.service.PostService;
 import vn.kurisu.mentormatch.entity.PostImage;
+import vn.kurisu.mentormatch.repository.PostLikeRepository;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -30,6 +31,7 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final CloudinaryService cloudinaryService;
+    private final PostLikeRepository postLikeRepository;
 
     private User getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -156,6 +158,22 @@ public class PostServiceImpl implements PostService {
                 .map(PostImage::getImageUrl)
                 .collect(Collectors.toList()) : Collections.emptyList();
 
+        Integer currentUserId = null;
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
+                String userName = authentication.getName();
+                currentUserId = userRepository.findByUserName(userName).map(User::getId).orElse(null);
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+
+        boolean isLiked = false;
+        if (currentUserId != null) {
+            isLiked = postLikeRepository.existsByPostIdAndUserId(post.getId(), currentUserId);
+        }
+
         return PostResponse.builder()
                 .id(post.getId())
                 .userId(post.getUser().getId())
@@ -164,6 +182,8 @@ public class PostServiceImpl implements PostService {
                 .content(post.getContent())
                 .imageUrls(imageUrls)
                 .createdAt(post.getCreatedAt())
+                .likeCount(post.getLikeCount() != null ? post.getLikeCount() : 0)
+                .isLiked(isLiked)
                 .build();
     }
 }
