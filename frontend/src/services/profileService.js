@@ -35,6 +35,19 @@ const profileService = {
     } catch (error) {
       throw error.response?.data || { message: 'Network error or server unavailable' };
     }
+  },
+
+  registerMentor: async (formData) => {
+    try {
+      const response = await api.post('/mentors/register', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      return response;
+    } catch (error) {
+      throw error.response?.data || { message: 'Network error or server unavailable' };
+    }
   }
 };
 

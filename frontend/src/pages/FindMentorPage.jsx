@@ -21,16 +21,16 @@ export default function FindMentorPage() {
             id: user.id,
             name: user.fullName || user.userName,
             avatar: user.avatarUrl || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.fullName || user.userName),
-            role: "Chuyên gia / Mentor", // Placeholder
+            role: user.mentorProfile?.title || "Chuyên gia / Mentor",
             price: "500.000đ", // Placeholder 
             rating: 5.0, // Placeholder
             students: 0, // Placeholder
-            tags: ["Java", "Spring Boot", "React"], // Placeholder
-            description: "Mentor nhiệt huyết trên hệ thống MentorMatch.",
+            tags: user.mentorProfile?.skills?.length > 0 ? user.mentorProfile.skills : ["Chưa cập nhật kỹ năng"],
+            description: user.mentorProfile?.bio || "Chưa cập nhật thông tin giới thiệu.",
             responseTime: "Phản hồi trong 2h", // Placeholder
             availability: "Sẵn sàng", // Placeholder
             isOnline: user.isActive,
-            isVerified: true
+            isVerified: user.mentorProfile?.isVerified || false
           }))
           setMentors(mappedMentors)
         }

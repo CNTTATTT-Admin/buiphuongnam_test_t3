@@ -13,6 +13,7 @@ import ProfileSettingsPage from './pages/ProfileSettingsPage'
 import MentorRegistrationPage from './pages/MentorRegistrationPage'
 import AdminLayout from './layouts/AdminLayout'
 import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminMentorRequestsPage from './pages/admin/AdminMentorRequestsPage'
 import FeedPage from './pages/FeedPage'
 import MentorSchedulePage from './pages/MentorSchedulePage'
 
@@ -46,6 +47,7 @@ export default function App() {
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
+            <Route path="mentor-requests" element={<AdminMentorRequestsPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

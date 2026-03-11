@@ -42,8 +42,8 @@ export default function MentorProfilePage() {
           <MentorHeader user={user} loading={loading} />
           {!loading && user && (
             <>
-              <MentorSkills />
-              <MentorAbout />
+              <MentorSkills user={user} />
+              <MentorAbout user={user} />
               <MentorReviews />
             </>
           )}

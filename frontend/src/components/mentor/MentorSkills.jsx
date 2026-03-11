@@ -1,10 +1,8 @@
 import React from "react"
 import { BadgeCheck } from "lucide-react"
 
-export default function MentorSkills() {
-  const skills = [
-    "Java", "React", "TypeScript", "System Design", "IELTS 8.0", "Tailwind CSS", "Node.js"
-  ]
+export default function MentorSkills({ user }) {
+  const skills = user?.mentorProfile?.skills || []
 
   return (
     <div className="bg-white p-8 rounded-xl border border-slate-100 shadow-sm mb-6">
@@ -13,14 +11,18 @@ export default function MentorSkills() {
         Kỹ năng chuyên môn
       </h2>
       <div className="flex flex-wrap gap-2">
-        {skills.map((skill, index) => (
-          <span 
-            key={index} 
-            className="px-4 py-1.5 bg-slate-100 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-200 transition-colors cursor-default"
-          >
-            {skill}
-          </span>
-        ))}
+        {skills.length > 0 ? (
+          skills.map((skill, index) => (
+            <span 
+              key={index} 
+              className="px-4 py-1.5 bg-slate-100 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-200 transition-colors cursor-default"
+            >
+              {skill}
+            </span>
+          ))
+        ) : (
+           <span className="text-slate-500 text-sm italic">Chưa cập nhật kỹ năng.</span>
+        )}
       </div>
     </div>
   )
