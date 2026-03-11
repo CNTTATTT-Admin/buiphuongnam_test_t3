@@ -8,6 +8,10 @@ export default function MentorSchedulePage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
 
+  // Calendar state
+  const [currentDate, setCurrentDate] = useState(new Date())
+  const [selectedDate, setSelectedDate] = useState(null)
+
   // Modal form state
   const [slotDate, setSlotDate] = useState("")
   const [startTime, setStartTime] = useState("")
@@ -118,6 +122,36 @@ export default function MentorSchedulePage() {
     return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
   }
 
+  // Calendar logic
+  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate()
+  const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay()
+
+  const handlePrevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))
+  const handleNextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))
+
+  const currentYear = currentDate.getFullYear()
+  const currentMonth = currentDate.getMonth()
+  const daysInMonth = getDaysInMonth(currentYear, currentMonth)
+  const firstDay = getFirstDayOfMonth(currentYear, currentMonth)
+
+  const calendarDays = []
+  for (let i = 0; i < firstDay; i++) calendarDays.push(null)
+  for (let i = 1; i <= daysInMonth; i++) calendarDays.push(i)
+
+  const getDateString = (d) => {
+    if (!d) return null;
+    const pad = (n) => n.toString().padStart(2, '0');
+    return `${currentYear}-${pad(currentMonth + 1)}-${pad(d)}`;
+  }
+
+  const hasBookingsOnDate = (dateStr) => {
+    return bookings.some(b => b.startTime && b.startTime.startsWith(dateStr));
+  }
+
+  const displayedBookings = selectedDate 
+    ? bookings.filter(b => b.startTime && b.startTime.startsWith(selectedDate))
+    : bookings;
+
   return (
     <div className="flex gap-8 max-w-6xl mx-auto pb-10">
       <div className="flex-1">
@@ -163,44 +197,86 @@ export default function MentorSchedulePage() {
               <h3 className="text-3xl font-bold text-slate-900">{bookings.length} ca</h3>
             </div>
 
-            {/* Mini Calendar Widget (Mock View for aesthetics) */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hidden md:block">
+            {/* Mini Calendar Widget (Interactive View) */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hidden md:block select-none">
                <div className="flex justify-between items-center mb-6">
-                 <h4 className="font-bold text-slate-900">Tháng này</h4>
+                 <h4 className="font-bold text-slate-900 capitalize">Tháng {currentMonth + 1}, {currentYear}</h4>
                  <div className="flex gap-2">
-                   <button className="text-slate-400 hover:text-slate-600"><ChevronLeft className="w-4 h-4" /></button>
-                   <button className="text-slate-400 hover:text-slate-600"><ChevronRight className="w-4 h-4" /></button>
+                   <button onClick={handlePrevMonth} className="text-slate-400 hover:text-[#372660] transition-colors"><ChevronLeft className="w-5 h-5" /></button>
+                   <button onClick={handleNextMonth} className="text-slate-400 hover:text-[#372660] transition-colors"><ChevronRight className="w-5 h-5" /></button>
                  </div>
                </div>
                
-               <div className="grid grid-cols-7 text-center gap-y-4">
+               <div className="grid grid-cols-7 text-center gap-y-3 gap-x-1">
                  {['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'].map(d => (
-                   <div key={d} className="text-[10px] font-bold text-slate-400">{d}</div>
+                   <div key={d} className="text-[10px] font-bold text-slate-400 mb-2">{d}</div>
                  ))}
                  
-                 {/* Mock Dates row 1 */}
-                 <div className="text-sm text-slate-300">24</div>
-                 <div className="text-sm text-slate-300">25</div>
-                 <div className="text-sm text-slate-300">26</div>
-                 <div className="text-sm text-slate-300">27</div>
-                 <div className="text-sm text-slate-300">28</div>
-                 <div className="text-sm text-slate-300">29</div>
-                 <div className="text-sm font-medium text-slate-700">1</div>
+                 {calendarDays.map((day, idx) => {
+                   if (!day) return <div key={`empty-${idx}`}></div>;
+                   const dateStr = getDateString(day);
+                   const isSelected = selectedDate === dateStr;
+                   const isToday = getDateString(new Date().getDate()) === dateStr && currentMonth === new Date().getMonth() && currentYear === new Date().getFullYear();
+                   const hasEvent = hasBookingsOnDate(dateStr);
+                   return (
+                     <div 
+                        key={idx} 
+                        onClick={() => setSelectedDate(isSelected ? null : dateStr)}
+                        className={`text-sm font-medium w-8 h-8 flex flex-col items-center justify-center rounded-full mx-auto cursor-pointer transition-all relative ${
+                          isSelected 
+                            ? 'bg-[#372660] text-white shadow-md' 
+                            : isToday 
+                              ? 'bg-indigo-50 text-[#372660] border border-[#372660]/20'
+                              : 'text-slate-700 hover:bg-slate-100'
+                        }`}
+                     >
+                       <span>{day}</span>
+                       {hasEvent && !isSelected && (
+                         <span className="absolute bottom-1 w-1 h-1 bg-rose-500 rounded-full"></span>
+                       )}
+                     </div>
+                   );
+                 })}
+               </div>
 
-                 {/* Mock Dates row 2 */}
-                 <div className="text-sm font-medium text-slate-700">2</div>
-                 <div className="text-sm font-medium text-slate-700 relative">
-                   3
-                   <span className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2 w-1 h-1 bg-[#372660] rounded-full"></span>
+               {selectedDate && (
+                 <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
+                    <p className="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" />
+                      Ngày: {new Date(selectedDate).toLocaleDateString('vi-VN')}
+                    </p>
+                    <button onClick={() => setSelectedDate(null)} className="text-[10px] uppercase font-bold text-[#372660] hover:underline">
+                      Xem tất cả
+                    </button>
                  </div>
-                 <div className="text-sm font-medium text-slate-700">4</div>
-                 <div className="text-sm font-medium bg-[#372660] text-white w-7 h-7 flex items-center justify-center rounded-full mx-auto shadow-sm">5</div>
-                 <div className="text-sm font-medium text-slate-700">6</div>
-                 <div className="text-sm font-medium text-slate-700 relative">
-                   7
-                   <span className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2 w-1 h-1 bg-[#372660] rounded-full"></span>
-                 </div>
-                 <div className="text-sm font-medium text-slate-700">8</div>
+               )}
+            </div>
+
+            {/* List of Created Time Slots */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mt-6">
+               <div className="flex justify-between items-center mb-4">
+                 <h4 className="font-bold text-slate-900">Khung giờ đã tạo</h4>
+               </div>
+               
+               <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                 {timeSlots.length === 0 ? (
+                   <p className="text-sm text-slate-500 text-center py-4">Chưa có khung giờ rảnh nào được tạo.</p>
+                 ) : (
+                   timeSlots.map(slot => (
+                     <div key={slot.id} className="p-3 border border-slate-100 rounded-xl bg-slate-50 flex justify-between items-center transition-colors hover:border-[#372660]/30">
+                       <div>
+                         <p className="text-sm font-bold text-[#372660]">{formatDate(slot.startTime)}</p>
+                         <p className="text-xs text-slate-500 font-medium mt-0.5">{formatTime(slot.startTime)} - {formatTime(slot.endTime)}</p>
+                       </div>
+                       <div className="text-right">
+                         <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${slot.status === 'AVAILABLE' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+                           {slot.status === 'AVAILABLE' ? "Đang mở" : "Đã đặt"}
+                         </span>
+                         <p className="text-xs font-semibold text-slate-700 mt-1">{slot.price.toLocaleString('vi-VN')}đ</p>
+                       </div>
+                     </div>
+                   ))
+                 )}
                </div>
             </div>
 
@@ -209,24 +285,29 @@ export default function MentorSchedulePage() {
           {/* RIGHT COLUMN: Upcoming Classes */}
           <div className="w-full lg:w-2/3">
              <div className="flex justify-between items-center mb-4 px-1">
-               <h3 className="font-bold text-lg text-slate-900">Danh sách Ca học</h3>
+               <h3 className="font-bold text-lg text-slate-900">
+                  {selectedDate ? `Ca học ngày ${new Date(selectedDate).toLocaleDateString('vi-VN')}` : "Danh sách Ca học"}
+               </h3>
+               <span className="text-xs font-bold bg-[#372660]/10 text-[#372660] px-2.5 py-1 rounded-lg">
+                 {displayedBookings.length} ca
+               </span>
              </div>
 
              <div className="space-y-4">
                 {loading ? (
                   <div className="text-center py-10 text-slate-400">Đang tải lịch học...</div>
-                ) : bookings.length === 0 ? (
+                ) : displayedBookings.length === 0 ? (
                   <div 
                     onClick={() => setIsModalOpen(true)}
                     className="rounded-2xl border-2 border-dashed border-slate-200 p-10 flex flex-col items-center justify-center text-center bg-slate-50/50 mt-6 group hover:border-[#372660]/30 hover:bg-[#372660]/5 transition-colors cursor-pointer">
                     <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center text-[#372660] mb-4">
                       <PlusCircle className="w-6 h-6" />
                     </div>
-                    <p className="text-sm font-medium text-slate-400 mb-2">Chưa có ca học nào được đặt.</p>
+                    <p className="text-sm font-medium text-slate-400 mb-2">Không có ca học nào {selectedDate ? 'trong ngày này' : 'được đặt'}.</p>
                     <p className="text-sm font-bold text-[#372660]">Mở thêm khung giờ rảnh?</p>
                   </div>
                 ) : (
-                  bookings.map((cls) => {
+                  displayedBookings.map((cls) => {
                      const statusInfo = getStatusDisplay(cls.status)
                      return (
                      <div key={cls.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 flex flex-col sm:flex-row gap-5 items-start sm:items-center justify-between hover:shadow-md transition-shadow">
@@ -234,7 +315,7 @@ export default function MentorSchedulePage() {
                        {/* User & Info */}
                        <div className="flex gap-4 items-center">
                          <div className="relative shrink-0">
-                            <img src={cls.menteeAvatar || "https://i.pravatar.cc/150"} alt="Avatar" className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm" />
+                            <img src={cls.menteeAvatar || `https://ui-avatars.com/api/?name=${cls.menteeName}&background=random`} alt="Avatar" className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm" />
                          </div>
                          
                          <div>

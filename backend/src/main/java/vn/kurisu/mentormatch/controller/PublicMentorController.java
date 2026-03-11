@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vn.kurisu.mentormatch.dto.response.ApiResponse;
 import vn.kurisu.mentormatch.dto.response.UserProfileResponse;
+import vn.kurisu.mentormatch.dto.response.TimeSlotResponse;
 import vn.kurisu.mentormatch.service.PublicMentorService;
 
 import java.util.List;
@@ -26,5 +27,10 @@ public class PublicMentorController {
     @GetMapping("/{id}")
     public ApiResponse<UserProfileResponse> getMentorById(@PathVariable Integer id) {
         return publicMentorService.getPublicMentorProfile(id);
+    }
+
+    @GetMapping("/{id}/time-slots")
+    public ApiResponse<List<TimeSlotResponse>> getMentorTimeSlots(@PathVariable Integer id) {
+        return publicMentorService.getPublicMentorTimeSlots(id);
     }
 }

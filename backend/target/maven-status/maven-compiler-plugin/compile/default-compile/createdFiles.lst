@@ -3,6 +3,7 @@ vn\kurisu\mentormatch\dto\request\RoleRequest$RoleRequestBuilder.class
 vn\kurisu\mentormatch\dto\request\RoleRequest.class
 vn\kurisu\mentormatch\controller\PostInteractionController.class
 vn\kurisu\mentormatch\service\RoleService.class
+vn\kurisu\mentormatch\service\impl\BookingServiceImpl.class
 vn\kurisu\mentormatch\entity\MenteeProfile$MenteeProfileBuilder.class
 vn\kurisu\mentormatch\dto\request\CommentRequest$CommentRequestBuilder.class
 vn\kurisu\mentormatch\repository\TimeSlotRepository.class
@@ -33,6 +34,7 @@ vn\kurisu\mentormatch\entity\MentorProfile$MentorProfileBuilder.class
 vn\kurisu\mentormatch\security\SecurityConfig.class
 vn\kurisu\mentormatch\dto\request\UserCreationRequest$UserCreationRequestBuilder.class
 vn\kurisu\mentormatch\dto\request\MentorProfileRequest.class
+vn\kurisu\mentormatch\dto\request\BookingRequest.class
 vn\kurisu\mentormatch\dto\response\RoleResponse$RoleResponseBuilder.class
 vn\kurisu\mentormatch\dto\response\MentorRequestResponse.class
 vn\kurisu\mentormatch\dto\response\CommentResponse$CommentResponseBuilder.class
@@ -45,6 +47,7 @@ vn\kurisu\mentormatch\entity\Role.class
 vn\kurisu\mentormatch\entity\Booking.class
 vn\kurisu\mentormatch\dto\response\UserProfileResponse$UserProfileResponseBuilder.class
 vn\kurisu\mentormatch\dto\response\MentorProfileResponse.class
+vn\kurisu\mentormatch\dto\request\BookingRequest$BookingRequestBuilder.class
 vn\kurisu\mentormatch\dto\request\MeetingLinkRequest.class
 vn\kurisu\mentormatch\entity\PostImage.class
 vn\kurisu\mentormatch\security\JwtAuthenticationFilter.class
@@ -116,11 +119,13 @@ vn\kurisu\mentormatch\repository\PostLikeRepository.class
 vn\kurisu\mentormatch\dto\request\TimeSlotRequest.class
 vn\kurisu\mentormatch\service\PublicMentorService.class
 vn\kurisu\mentormatch\entity\Comment.class
+vn\kurisu\mentormatch\controller\BookingController.class
 vn\kurisu\mentormatch\entity\Booking$BookingBuilder.class
 vn\kurisu\mentormatch\dto\response\AuthResponse$AuthResponseBuilder.class
 vn\kurisu\mentormatch\dto\response\MentorRequestResponse$CertificateDto$CertificateDtoBuilder.class
 vn\kurisu\mentormatch\dto\response\MentorRequestResponse$CertificateDto.class
 vn\kurisu\mentormatch\dto\response\UserProfileResponse.class
+vn\kurisu\mentormatch\service\BookingService.class
 vn\kurisu\mentormatch\controller\ProfileController.class
 vn\kurisu\mentormatch\security\JwtTokenProvider.class
 vn\kurisu\mentormatch\repository\CertificateRepository.class

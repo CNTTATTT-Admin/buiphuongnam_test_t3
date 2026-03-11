@@ -15,7 +15,11 @@ import vn.kurisu.mentormatch.entity.User;
 import vn.kurisu.mentormatch.exception.AppException;
 import vn.kurisu.mentormatch.exception.ErrorCode;
 import vn.kurisu.mentormatch.repository.UserRepository;
+import vn.kurisu.mentormatch.repository.TimeSlotRepository;
 import vn.kurisu.mentormatch.service.PublicMentorService;
+import vn.kurisu.mentormatch.entity.SlotStatus;
+import vn.kurisu.mentormatch.dto.response.TimeSlotResponse;
+import java.time.LocalDateTime;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,6 +29,7 @@ import java.util.stream.Collectors;
 public class PublicMentorServiceImpl implements PublicMentorService {
 
     private final UserRepository userRepository;
+    private final TimeSlotRepository timeSlotRepository;
 
     @Override
     public ApiResponse<List<UserProfileResponse>> getAllPublicMentors() {
@@ -52,6 +57,35 @@ public class PublicMentorServiceImpl implements PublicMentorService {
 
         return ApiResponse.<UserProfileResponse>builder()
                 .result(mapToUserProfileResponse(user))
+                .build();
+    }
+
+    @Override
+    public ApiResponse<List<TimeSlotResponse>> getPublicMentorTimeSlots(Integer mentorId) {
+        User user = userRepository.findById(mentorId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        boolean isMentor = user.getRoles().stream()
+                .anyMatch(role -> role.getName().equals("ROLE_MENTOR"));
+
+        if (!isMentor) {
+            throw new RuntimeException("User is not a mentor");
+        }
+
+        List<TimeSlotResponse> slots = timeSlotRepository.findUpcomingSlotsByMentorId(mentorId, LocalDateTime.now()).stream()
+                .filter(slot -> slot.getStatus() == SlotStatus.AVAILABLE)
+                .map(slot -> TimeSlotResponse.builder()
+                        .id(slot.getId())
+                        .mentorId(slot.getMentor().getId())
+                        .startTime(slot.getStartTime())
+                        .endTime(slot.getEndTime())
+                        .price(slot.getPrice())
+                        .status(slot.getStatus())
+                        .build())
+                .collect(Collectors.toList());
+
+        return ApiResponse.<List<TimeSlotResponse>>builder()
+                .result(slots)
                 .build();
     }
 

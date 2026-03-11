@@ -15,6 +15,9 @@ public class BookingResponse {
     private Integer menteeId;
     private String menteeName;
     private String menteeAvatar;
+    private Integer mentorId;
+    private String mentorName;
+    private String mentorAvatar;
     private Integer timeSlotId;
     private LocalDateTime startTime;
     private LocalDateTime endTime;

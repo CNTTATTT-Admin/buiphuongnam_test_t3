@@ -29,6 +29,7 @@ export default function Sidebar() {
   const menuItems = [
     { icon: Home, label: "Bảng tin", active: window.location.pathname === '/' || window.location.pathname === '', href: '/' },
     { icon: Search, label: "Tìm Mentor", active: window.location.pathname === '/search', href: '/search' },
+    { icon: Calendar, label: "Lịch học", active: window.location.pathname === '/my-bookings', href: '/my-bookings' },
     // Only show "Lịch dạy" if user is a mentor
     ...(isMentor ? [{ icon: Calendar, label: "Lịch dạy", active: window.location.pathname === '/schedule', href: '/schedule' }] : []),
     { icon: Settings, label: "Cài đặt", active: window.location.pathname === '/settings', href: '/settings' },

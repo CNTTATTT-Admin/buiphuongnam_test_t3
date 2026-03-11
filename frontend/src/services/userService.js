@@ -10,7 +10,13 @@ const getUserById = async (id) => {
   return response;
 };
 
+const getMentorTimeSlots = async (id) => {
+  const response = await api.get(`/public/mentors/${id}/time-slots`);
+  return response;
+};
+
 export const userService = {
   getMentors,
   getUserById,
+  getMentorTimeSlots,
 };

@@ -11,6 +11,7 @@ import FindMentorPage from './pages/FindMentorPage'
 import MentorProfilePage from './pages/MentorProfilePage'
 import ProfileSettingsPage from './pages/ProfileSettingsPage'
 import MentorRegistrationPage from './pages/MentorRegistrationPage'
+import MenteeBookingsPage from './pages/MenteeBookingsPage'
 import AdminLayout from './layouts/AdminLayout'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminMentorRequestsPage from './pages/admin/AdminMentorRequestsPage'
@@ -42,6 +43,7 @@ export default function App() {
           <Route path="/mentor/:id" element={<UserLayout><MentorProfilePage /></UserLayout>} />
           <Route path="/settings" element={<UserLayout><ProfileSettingsPage /></UserLayout>} />
           <Route path="/schedule" element={<UserLayout><div className="container mx-auto px-4 py-8"><div className="flex gap-8"><Sidebar /><div className="flex-1"><MentorSchedulePage /></div></div></div></UserLayout>} />
+          <Route path="/my-bookings" element={<UserLayout><div className="container mx-auto px-4 py-8"><div className="flex gap-8"><Sidebar /><div className="flex-1"><MenteeBookingsPage /></div></div></div></UserLayout>} />
           <Route path="/register-mentor" element={<UserLayout><MentorRegistrationPage /></UserLayout>} />
           
           {/* Admin Routes */}
