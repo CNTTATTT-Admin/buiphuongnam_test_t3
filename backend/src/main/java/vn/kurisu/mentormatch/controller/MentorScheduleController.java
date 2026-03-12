@@ -30,6 +30,15 @@ public class MentorScheduleController {
         return scheduleService.getMyTimeSlots();
     }
 
+    @DeleteMapping("/time-slots/{id}")
+    public ApiResponse<TimeSlotResponse> deleteTimeSlot(@PathVariable Integer id){
+        return scheduleService.deleteTimeSlot(id);
+    }
+    @PutMapping("/time-slots/{id}")
+    public ApiResponse<TimeSlotResponse> updateTimeSlot(@PathVariable Integer id, @RequestBody @Valid TimeSlotRequest request){
+        return scheduleService.updateTimeSlot(id, request);
+    }
+
     @GetMapping("/bookings")
     public ApiResponse<List<BookingResponse>> getMyBookings() {
         return scheduleService.getMyBookings();

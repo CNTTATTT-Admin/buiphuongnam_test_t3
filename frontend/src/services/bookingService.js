@@ -19,5 +19,21 @@ export const bookingService = {
       console.error('Error fetching mentee bookings:', error);
       throw error;
     }
-  }
+  },
+
+  completeBooking: async (bookingId) => {
+    const response = await api.put(`/bookings/${bookingId}/complete`);
+    return response;
+  },
+
+  submitReview: async (reviewData) => {
+    const response = await api.post('/reviews', reviewData);
+    return response;
+  },
+
+  getReviewByBooking: async (bookingId) => {
+    const response = await api.get(`/reviews/booking/${bookingId}`);
+    return response;
+  },
 };
+

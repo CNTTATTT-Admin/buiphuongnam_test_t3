@@ -17,6 +17,9 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminMentorRequestsPage from './pages/admin/AdminMentorRequestsPage'
 import FeedPage from './pages/FeedPage'
 import MentorSchedulePage from './pages/MentorSchedulePage'
+import AdminSkillPage from './pages/admin/AdminSkillPage'
+import MentorWalletPage from './pages/MentorWalletPage'
+import AdminWithdrawalPage from './pages/admin/AdminWithdrawalPage'
 
 // User App Layout (with top Navbar)
 function UserLayout({ children }) {
@@ -44,12 +47,15 @@ export default function App() {
           <Route path="/settings" element={<UserLayout><ProfileSettingsPage /></UserLayout>} />
           <Route path="/schedule" element={<UserLayout><div className="container mx-auto px-4 py-8"><div className="flex gap-8"><Sidebar /><div className="flex-1"><MentorSchedulePage /></div></div></div></UserLayout>} />
           <Route path="/my-bookings" element={<UserLayout><div className="container mx-auto px-4 py-8"><div className="flex gap-8"><Sidebar /><div className="flex-1"><MenteeBookingsPage /></div></div></div></UserLayout>} />
+          <Route path="/wallet" element={<UserLayout><div className="container mx-auto px-4 py-8"><div className="flex gap-8"><Sidebar /><div className="flex-1"><MentorWalletPage /></div></div></div></UserLayout>} />
           <Route path="/register-mentor" element={<UserLayout><MentorRegistrationPage /></UserLayout>} />
           
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="mentor-requests" element={<AdminMentorRequestsPage />} />
+            <Route path="skills" element={<AdminSkillPage />} />
+            <Route path="withdrawals" element={<AdminWithdrawalPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

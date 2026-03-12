@@ -1,5 +1,4 @@
-import React from "react"
-import { LayoutDashboard, Users, AlertTriangle, CreditCard, LogOut } from "lucide-react"
+import { LayoutDashboard, Users, AlertTriangle, CreditCard, LogOut, Tag } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
 
 export default function AdminSidebar() {
@@ -9,6 +8,7 @@ export default function AdminSidebar() {
   const menuItems = [
     { icon: LayoutDashboard, label: "Tổng quan", path: "/admin" },
     { icon: Users, label: "Duyệt Mentor", path: "/admin/mentor-requests" },
+    { icon: Tag, label: "Quản lý kỹ năng", path: "/admin/skills" },
     { icon: AlertTriangle, label: "Khiếu nại", path: "/admin/reports" },
     { icon: CreditCard, label: "Rút tiền", path: "/admin/withdrawals" },
   ]

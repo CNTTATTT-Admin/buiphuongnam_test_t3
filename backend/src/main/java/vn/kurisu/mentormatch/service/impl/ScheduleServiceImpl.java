@@ -11,6 +11,8 @@ import vn.kurisu.mentormatch.dto.response.ApiResponse;
 import vn.kurisu.mentormatch.dto.response.BookingResponse;
 import vn.kurisu.mentormatch.dto.response.TimeSlotResponse;
 import vn.kurisu.mentormatch.entity.*;
+import vn.kurisu.mentormatch.exception.AppException;
+import vn.kurisu.mentormatch.exception.ErrorCode;
 import vn.kurisu.mentormatch.repository.BookingRepository;
 import vn.kurisu.mentormatch.repository.TimeSlotRepository;
 import vn.kurisu.mentormatch.repository.UserRepository;
@@ -18,6 +20,8 @@ import vn.kurisu.mentormatch.service.ScheduleService;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+import javax.management.RuntimeErrorException;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +49,37 @@ public class ScheduleServiceImpl implements ScheduleService {
         if (!isMentor) {
             throw new RuntimeException("Only mentors can perform this action");
         }
+    }
+    @Override
+    public ApiResponse<TimeSlotResponse> deleteTimeSlot(Integer id) {
+        User mentor = getCurrentUser();
+        verifyMentorRole(mentor);
+        TimeSlot timeSlot = timeSlotRepository.findById(id).orElseThrow(()-> new AppException(ErrorCode.TIME_SLOT_NOT_FOUND));
+        if (!timeSlot.getMentor().getId().equals(mentor.getId())){
+            throw new RuntimeException("You do not have permission to delete this time slot");
+        }
+        timeSlotRepository.delete(timeSlot);
+        return ApiResponse.<TimeSlotResponse>builder()
+                .message("Time slot deleted successfully")
+                .result(mapToTimeSlotResponse(timeSlot))
+                .build();
+    }
+    @Override
+    public ApiResponse<TimeSlotResponse> updateTimeSlot(Integer id, TimeSlotRequest request) {
+        User mentor = getCurrentUser();
+        verifyMentorRole(mentor);
+        TimeSlot timeSlot = timeSlotRepository.findById(id).orElseThrow(()-> new AppException(ErrorCode.TIME_SLOT_NOT_FOUND));
+        if (!timeSlot.getMentor().getId().equals(mentor.getId())){
+            throw new RuntimeException("You do not have permission to update this time slot");
+        }
+        timeSlot.setStartTime(request.getStartTime());
+        timeSlot.setEndTime(request.getEndTime());
+        timeSlot.setPrice(request.getPrice());
+        timeSlot = timeSlotRepository.save(timeSlot);
+        return ApiResponse.<TimeSlotResponse>builder()
+                .message("Time slot updated successfully")
+                .result(mapToTimeSlotResponse(timeSlot))
+                .build();
     }
 
     @Override

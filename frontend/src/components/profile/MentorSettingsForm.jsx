@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react"
 import { ShieldAlert, Plus, X } from "lucide-react"
 import { Input } from "../ui/input"
 import profileService from "../../services/profileService"
+import uploadService from "../../services/uploadService"
 
 export default function MentorSettingsForm({ profile, onUpdate }) {
   const [formData, setFormData] = useState({
@@ -11,6 +12,13 @@ export default function MentorSettingsForm({ profile, onUpdate }) {
   })
   const [skills, setSkills] = useState([])
   const [newSkill, setNewSkill] = useState("")
+  
+  // Certificates state
+  const [certificates, setCertificates] = useState([])
+  const [newCertName, setNewCertName] = useState("")
+  const [newCertFile, setNewCertFile] = useState(null)
+  const [isUploadingObj, setIsUploadingObj] = useState(false)
+
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState(null)
 
@@ -22,6 +30,7 @@ export default function MentorSettingsForm({ profile, onUpdate }) {
         yearsOfExperience: profile.mentorProfile.yearsOfExperience || 0
       })
       setSkills(profile.mentorProfile.skills || [])
+      setCertificates(profile.mentorProfile.certificates || [])
     }
   }, [profile])
 
@@ -41,6 +50,40 @@ export default function MentorSettingsForm({ profile, onUpdate }) {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
+  const handleAddCertificate = async () => {
+    if (!newCertName.trim() || !newCertFile) {
+      alert("Vui lòng nhập tên và chọn file chứng chỉ!");
+      return;
+    }
+
+    try {
+      setIsUploadingObj(true);
+      const fileUrl = await uploadService.uploadSingleFile(newCertFile);
+      const newCert = {
+        id: Date.now(), // Temporary ID for frontend tracking
+        name: newCertName.trim(),
+        fileUrl: fileUrl,
+        isApproved: false
+      };
+      setCertificates([...certificates, newCert]);
+      setNewCertName("");
+      setNewCertFile(null);
+      // Reset file input via DOM
+      if (document.getElementById("certFileInput")) {
+        document.getElementById("certFileInput").value = "";
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Tải chứng chỉ lên thất bại! " + err.message);
+    } finally {
+      setIsUploadingObj(false);
+    }
+  }
+
+  const removeCertificate = (certId) => {
+    setCertificates(certificates.filter(c => c.id !== certId));
+  }
+
   const handleSave = async (e) => {
     e.preventDefault()
     setIsSaving(true)
@@ -52,7 +95,7 @@ export default function MentorSettingsForm({ profile, onUpdate }) {
         bio: formData.bio,
         yearsOfExperience: parseInt(formData.yearsOfExperience) || 0,
         skills: skills,
-        certificates: profile?.mentorProfile?.certificates || [] // Preserve existing certs for now
+        certificates: certificates
       })
       if (result.code === 1000) {
         setMessage({ type: 'success', text: 'Cập nhật thiết lập Mentor thành công!' })
@@ -154,6 +197,58 @@ export default function MentorSettingsForm({ profile, onUpdate }) {
                 className="bg-slate-50 border-slate-200 focus-visible:ring-amber-500 pr-10"
               />
               <Plus className="absolute right-3 top-2.5 w-4 h-4 text-slate-400" />
+            </div>
+          </div>
+
+          {/* Certificate Management */}
+          <div className="space-y-3 pt-4 border-t border-slate-100">
+            <label className="text-xs font-bold text-slate-700 uppercase tracking-wide">Bằng cấp & Chứng chỉ</label>
+            
+            <div className="space-y-3 mb-4">
+              {certificates.length === 0 ? (
+                <p className="text-sm text-slate-500 italic">Chưa có chứng chỉ nào.</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {certificates.map(cert => (
+                    <div key={cert.id} className="flex justify-between items-start gap-2 p-3 bg-slate-50 border border-slate-100 rounded-lg group">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-800 line-clamp-2" title={cert.name}>{cert.name}</p>
+                        <a href={cert.fileUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline inline-block mt-0.5">Xem file</a>
+                      </div>
+                      <button type="button" onClick={() => removeCertificate(cert.id)} className="text-slate-400 hover:text-red-500 transition-colors p-1">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
+              <h4 className="text-sm font-semibold text-slate-800 mb-2">Thêm chứng chỉ mới</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <Input 
+                  placeholder="Tên chứng chỉ (VD: IELTS 8.0)"
+                  value={newCertName}
+                  onChange={(e) => setNewCertName(e.target.value)}
+                  className="bg-white border-slate-200 focus-visible:ring-amber-500"
+                />
+                <input 
+                  type="file" 
+                  id="certFileInput"
+                  accept="image/*,.pdf"
+                  onChange={(e) => setNewCertFile(e.target.files[0])}
+                  className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-[#372660] file:text-white hover:file:bg-[#2b1d4c] transition-all bg-white border border-slate-200 rounded-lg cursor-pointer"
+                />
+              </div>
+              <button 
+                type="button" 
+                onClick={handleAddCertificate}
+                disabled={isUploadingObj}
+                className="mt-2 text-sm px-4 py-2 bg-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isUploadingObj ? "Đang tải lên..." : "Tải lên & Thêm"}
+              </button>
             </div>
           </div>
 

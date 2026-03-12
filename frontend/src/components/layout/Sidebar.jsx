@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { Home, Search, Calendar, Settings } from "lucide-react"
+import { Home, Search, Calendar, Settings, Wallet } from "lucide-react"
 import { useAuth } from "../../contexts/AuthContext"
 import profileService from "../../services/profileService"
 
@@ -30,8 +30,11 @@ export default function Sidebar() {
     { icon: Home, label: "Bảng tin", active: window.location.pathname === '/' || window.location.pathname === '', href: '/' },
     { icon: Search, label: "Tìm Mentor", active: window.location.pathname === '/search', href: '/search' },
     { icon: Calendar, label: "Lịch học", active: window.location.pathname === '/my-bookings', href: '/my-bookings' },
-    // Only show "Lịch dạy" if user is a mentor
-    ...(isMentor ? [{ icon: Calendar, label: "Lịch dạy", active: window.location.pathname === '/schedule', href: '/schedule' }] : []),
+    // Only show Mentor items if user has Mentor role
+    ...(isMentor ? [
+      { icon: Calendar, label: "Lịch dạy", active: window.location.pathname === '/schedule', href: '/schedule' },
+      { icon: Wallet, label: "Ví tiền", active: window.location.pathname === '/wallet', href: '/wallet' },
+    ] : []),
     { icon: Settings, label: "Cài đặt", active: window.location.pathname === '/settings', href: '/settings' },
   ]
 

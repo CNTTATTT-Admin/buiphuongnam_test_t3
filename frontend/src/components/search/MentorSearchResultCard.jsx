@@ -37,7 +37,7 @@ export default function MentorSearchResultCard({ mentor }) {
           
           <div className="flex flex-col items-end shrink-0">
             <div className="text-xl font-bold text-slate-900">
-              {mentor.price}<span className="text-sm font-normal text-slate-500">/giờ</span>
+              {mentor.price}<span className="text-sm font-normal text-slate-500">/buổi</span>
             </div>
             <div className="flex items-center gap-1.5 mt-1">
               <Star className="w-4 h-4 text-amber-500 fill-current" />

@@ -26,4 +26,14 @@ public class BookingController {
     public ApiResponse<List<BookingResponse>> getMyTraineeBookings() {
         return bookingService.getMyTraineeBookings();
     }
+
+    @PutMapping("/{id}/complete")
+    public ApiResponse<BookingResponse> completeBooking(@PathVariable Integer id) {
+        return bookingService.completeBooking(id);
+    }
+
+    @PutMapping("/{id}/cancel")
+    public ApiResponse<BookingResponse> cancelBooking(@PathVariable Integer id) {
+        return bookingService.cancelBooking(id);
+    }
 }

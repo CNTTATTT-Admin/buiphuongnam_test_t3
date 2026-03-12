@@ -6,14 +6,11 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.kurisu.mentormatch.dto.request.BookingRequest;
 import vn.kurisu.mentormatch.dto.response.ApiResponse;
 import vn.kurisu.mentormatch.dto.response.BookingResponse;
-import vn.kurisu.mentormatch.entity.Booking;
-import vn.kurisu.mentormatch.entity.BookingStatus;
-import vn.kurisu.mentormatch.entity.SlotStatus;
-import vn.kurisu.mentormatch.entity.TimeSlot;
-import vn.kurisu.mentormatch.entity.User;
+import vn.kurisu.mentormatch.entity.*;
 import vn.kurisu.mentormatch.exception.AppException;
 import vn.kurisu.mentormatch.exception.ErrorCode;
 import vn.kurisu.mentormatch.repository.BookingRepository;
+import vn.kurisu.mentormatch.repository.MentorProfileRepository;
 import vn.kurisu.mentormatch.repository.TimeSlotRepository;
 import vn.kurisu.mentormatch.repository.UserRepository;
 import vn.kurisu.mentormatch.service.BookingService;
@@ -30,6 +27,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final TimeSlotRepository timeSlotRepository;
     private final UserRepository userRepository;
+    private final MentorProfileRepository mentorProfileRepository;
 
     private User getCurrentUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -79,6 +77,59 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional
+    public ApiResponse<BookingResponse> cancelBooking(Integer id) {
+        User currentUser = getCurrentUser();
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+        if (!booking.getMentee().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("You are not authorized to cancel this booking");
+        }
+        booking.setStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+        return ApiResponse.<BookingResponse>builder()
+                .result(mapToBookingResponse(booking))
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public ApiResponse<BookingResponse> completeBooking(Integer id) {
+        User currentMentee = getCurrentUser();
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if (!booking.getMentee().getId().equals(currentMentee.getId())) {
+            throw new RuntimeException("You are not authorized to complete this booking");
+        }
+
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new RuntimeException("Only confirmed bookings can be completed");
+        }
+
+        // Mark as completed
+        booking.setStatus(BookingStatus.COMPLETED);
+        bookingRepository.save(booking);
+
+        // Transfer slot price to mentor's wallet
+        TimeSlot timeSlot = booking.getTimeSlot();
+        User mentor = timeSlot.getMentor();
+        MentorProfile mentorProfile = mentor.getMentorProfile();
+
+        if (mentorProfile != null) {
+            mentorProfile.setWalletBalance(
+                    mentorProfile.getWalletBalance().add(timeSlot.getPrice())
+            );
+            mentorProfileRepository.save(mentorProfile);
+        }
+
+        return ApiResponse.<BookingResponse>builder()
+                .result(mapToBookingResponse(booking))
+                .message("Booking completed. " + timeSlot.getPrice() + " VND transferred to mentor's wallet.")
+                .build();
+    }
+
+    @Override
     public ApiResponse<List<BookingResponse>> getMyTraineeBookings() {
         User currentMentee = getCurrentUser();
 
@@ -111,3 +162,4 @@ public class BookingServiceImpl implements BookingService {
                 .build();
     }
 }
+

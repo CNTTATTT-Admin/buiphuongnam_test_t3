@@ -11,6 +11,8 @@ import java.util.List;
 
 public interface ScheduleService {
     // For Mentors
+    ApiResponse<TimeSlotResponse> deleteTimeSlot(Integer id);
+    ApiResponse<TimeSlotResponse> updateTimeSlot(Integer id, TimeSlotRequest request);
     ApiResponse<TimeSlotResponse> createTimeSlot(TimeSlotRequest request);
     ApiResponse<List<TimeSlotResponse>> getMyTimeSlots();
     ApiResponse<List<BookingResponse>> getMyBookings();

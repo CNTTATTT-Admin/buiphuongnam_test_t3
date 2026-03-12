@@ -16,15 +16,16 @@ export default function FindMentorPage() {
         setLoading(true)
         const res = await userService.getMentors()
         if (res.code === 1000) {
-          // Map backend UserResponse to match MentorSearchResultCard props natively
+          // Map backend UserResponse to match MentorSearchResultCard props
           const mappedMentors = res.result.map(user => ({
             id: user.id,
             name: user.fullName || user.userName,
             avatar: user.avatarUrl || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.fullName || user.userName),
             role: user.mentorProfile?.title || "Chuyên gia / Mentor",
-            price: "500.000đ", // Placeholder 
+            price: null, // Will be filled after fetching time slots
             rating: 5.0, // Placeholder
             students: 0, // Placeholder
+            yearOfExp: user.mentorProfile?.yearsOfExperience,
             tags: user.mentorProfile?.skills?.length > 0 ? user.mentorProfile.skills : ["Chưa cập nhật kỹ năng"],
             description: user.mentorProfile?.bio || "Chưa cập nhật thông tin giới thiệu.",
             responseTime: "Phản hồi trong 2h", // Placeholder
@@ -32,6 +33,23 @@ export default function FindMentorPage() {
             isOnline: user.isActive,
             isVerified: user.mentorProfile?.isVerified || false
           }))
+
+          // Fetch time slots for each mentor in parallel to calculate average price
+          const slotsPromises = mappedMentors.map(m =>
+            userService.getMentorTimeSlots(m.id).catch(() => ({ code: 0, result: [] }))
+          )
+          const slotsResults = await Promise.all(slotsPromises)
+
+          slotsResults.forEach((slotRes, index) => {
+            if (slotRes.code === 1000 && slotRes.result && slotRes.result.length > 0) {
+              const totalPrice = slotRes.result.reduce((sum, slot) => sum + (slot.price || 0), 0)
+              const avgPrice = Math.round(totalPrice / slotRes.result.length)
+              mappedMentors[index].price = avgPrice.toLocaleString('vi-VN') + 'đ'
+            } else {
+              mappedMentors[index].price = 'Liên hệ'
+            }
+          })
+
           setMentors(mappedMentors)
         }
       } catch (err) {

@@ -26,7 +26,7 @@ export default function MentorCard({ mentor }) {
         
         <div className="flex-1">
           <h3 className="font-bold text-lg text-slate-900 line-clamp-1">{mentor.name}</h3>
-          <p className="text-sm text-primary font-medium mb-3">{mentor.expertise}</p>
+          <p className="text-sm text-primary font-medium mb-3">{mentor.expertise} - {mentor.yearOfExp}</p>
           
           <p className="text-sm text-slate-600 mb-4 line-clamp-2">
             {mentor.bio}
