@@ -56,6 +56,12 @@ export default function MentorHeader({ user, loading }) {
               <MapPin className="w-4 h-4 text-slate-400" />
               Việt Nam
             </div>
+            {user.mentorProfile?.yearsOfExperience != null && (
+              <div className="flex items-center gap-1.5">
+                <Briefcase className="w-4 h-4 text-slate-400" />
+                {user.mentorProfile.yearsOfExperience} năm kinh nghiệm
+              </div>
+            )}
             <div className="flex items-center gap-1.5 text-slate-700">
               <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
               5.0 <span className="text-slate-500 font-normal">(0 đánh giá)</span>

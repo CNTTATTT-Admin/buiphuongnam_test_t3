@@ -59,7 +59,7 @@ export default function MentorProfilePage() {
             <>
               <MentorSkills user={user} />
               <MentorAbout user={user} />
-              <MentorReviews />
+              <MentorReviews mentorId={user.id} />
             </>
           )}
         </div>

@@ -72,6 +72,14 @@ public class ScheduleServiceImpl implements ScheduleService {
         if (!timeSlot.getMentor().getId().equals(mentor.getId())){
             throw new RuntimeException("You do not have permission to update this time slot");
         }
+
+        // Check for overlapping slots (exclude the current slot being updated)
+        List<TimeSlot> overlapping = timeSlotRepository.findOverlappingSlots(
+                mentor.getId(), request.getStartTime(), request.getEndTime(), id);
+        if (!overlapping.isEmpty()) {
+            throw new RuntimeException("Khung giờ này bị trùng với một khung giờ đã tồn tại. Vui lòng chọn thời gian khác.");
+        }
+
         timeSlot.setStartTime(request.getStartTime());
         timeSlot.setEndTime(request.getEndTime());
         timeSlot.setPrice(request.getPrice());
@@ -89,6 +97,13 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         if (request.getStartTime().isAfter(request.getEndTime()) || request.getStartTime().isEqual(request.getEndTime())) {
             throw new RuntimeException("End time must be after start time");
+        }
+
+        // Check for overlapping time slots (excludeId=0 means no slot to exclude)
+        List<TimeSlot> overlapping = timeSlotRepository.findOverlappingSlots(
+                mentor.getId(), request.getStartTime(), request.getEndTime(), 0);
+        if (!overlapping.isEmpty()) {
+            throw new AppException(ErrorCode.TIME_SLOT_CONFLICT);
         }
 
         TimeSlot timeSlot = TimeSlot.builder()

@@ -17,7 +17,8 @@ public enum ErrorCode {
     UNAUTHORIZED(1008, "You do not have permission", HttpStatus.FORBIDDEN),
     ROLE_NOT_FOUND(1009, "Role not found", HttpStatus.NOT_FOUND),
     BAD_CREDENTIALS(1010, "Invalid username or password", HttpStatus.UNAUTHORIZED),
-    TIME_SLOT_NOT_FOUND(1011, "Time slot not found", HttpStatus.NOT_FOUND);
+    TIME_SLOT_NOT_FOUND(1011, "Time slot not found", HttpStatus.NOT_FOUND),
+    TIME_SLOT_CONFLICT(1012, "Time slot conflict", HttpStatus.BAD_REQUEST);
 
     private final int code;
     private final String message;
