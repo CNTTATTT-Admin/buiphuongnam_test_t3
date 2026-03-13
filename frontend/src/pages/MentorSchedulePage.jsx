@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react"
-import { Calendar, Clock, ChevronLeft, ChevronRight, Video, FileText, PlusCircle, CheckCircle, Clock3, X } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { Calendar, Clock, ChevronLeft, ChevronRight, Video, FileText, PlusCircle, CheckCircle, Clock3, X, User, Pencil, Trash2 } from "lucide-react"
 import scheduleService from "../services/scheduleService"
 
 export default function MentorSchedulePage() {
+  const navigate = useNavigate()
   const [bookings, setBookings] = useState([])
   const [timeSlots, setTimeSlots] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -18,6 +20,15 @@ export default function MentorSchedulePage() {
   const [endTime, setEndTime] = useState("")
   const [price, setPrice] = useState("500000")
   const [submitError, setSubmitError] = useState("")
+
+  // Edit slot modal
+  const [editSlot, setEditSlot] = useState(null)
+  const [editDate, setEditDate] = useState("")
+  const [editStart, setEditStart] = useState("")
+  const [editEnd, setEditEnd] = useState("")
+  const [editPrice, setEditPrice] = useState("")
+  const [editError, setEditError] = useState("")
+
 
   useEffect(() => {
     fetchData()
@@ -40,11 +51,58 @@ export default function MentorSchedulePage() {
     }
   }
 
+  const handleViewMentee = (menteeId) => {
+    navigate(`/mentee/${menteeId}`)
+  }
+
+  const handleDeleteSlot = async (slotId) => {
+    if (!confirm("Bạn có chắc muốn xóa khung giờ này?")) return
+    try {
+      const res = await scheduleService.deleteTimeSlot(slotId)
+      if (res.code === 1000) fetchData()
+      else alert(res.message || "Có lỗi xảy ra")
+    } catch (err) {
+      alert(err.response?.data?.message || "Lỗi kết nối Server")
+    }
+  }
+
+  const openEditSlot = (slot) => {
+    setEditSlot(slot)
+    const startDt = new Date(slot.startTime)
+    const endDt = new Date(slot.endTime)
+    const pad = (n) => n.toString().padStart(2, '0')
+    setEditDate(`${startDt.getFullYear()}-${pad(startDt.getMonth()+1)}-${pad(startDt.getDate())}`)
+    setEditStart(`${pad(startDt.getHours())}:${pad(startDt.getMinutes())}`)
+    setEditEnd(`${pad(endDt.getHours())}:${pad(endDt.getMinutes())}`)
+    setEditPrice(slot.price.toString())
+    setEditError("")
+  }
+
+  const handleEditSlot = async (e) => {
+    e.preventDefault()
+    setEditError("")
+    try {
+      const res = await scheduleService.updateTimeSlot(editSlot.id, {
+        startTime: `${editDate}T${editStart}:00`,
+        endTime: `${editDate}T${editEnd}:00`,
+        price: parseFloat(editPrice)
+      })
+      if (res.code === 1000) {
+        setEditSlot(null)
+        fetchData()
+      } else {
+        setEditError(res.message || "Có lỗi xảy ra")
+      }
+    } catch (err) {
+      setEditError(err.response?.data?.message || "Lỗi kết nối Server")
+    }
+  }
+
   const handleBookingAction = async (bookingId, action) => {
     try {
       const res = await scheduleService.processBooking(bookingId, action)
       if (res.code === 1000) {
-        fetchData() // Refresh list after action
+        fetchData()
       } else {
         alert(res.message || "Có lỗi xảy ra")
       }
@@ -57,7 +115,7 @@ export default function MentorSchedulePage() {
     try {
       const res = await scheduleService.updateMeetingLink(bookingId, link)
       if (res.code === 1000) {
-        fetchData() // Refresh list
+        fetchData()
       } else {
         alert(res.message || "Có lỗi xảy ra")
       }
@@ -87,7 +145,7 @@ export default function MentorSchedulePage() {
 
       if (res.code === 1000) {
         setIsModalOpen(false)
-        fetchData() // Refresh list
+        fetchData()
         setSlotDate("")
         setStartTime("")
         setEndTime("")
@@ -197,7 +255,7 @@ export default function MentorSchedulePage() {
               <h3 className="text-3xl font-bold text-slate-900">{bookings.length} ca</h3>
             </div>
 
-            {/* Mini Calendar Widget (Interactive View) */}
+            {/* Mini Calendar */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hidden md:block select-none">
                <div className="flex justify-between items-center mb-6">
                  <h4 className="font-bold text-slate-900 capitalize">Tháng {currentMonth + 1}, {currentYear}</h4>
@@ -263,16 +321,28 @@ export default function MentorSchedulePage() {
                    <p className="text-sm text-slate-500 text-center py-4">Chưa có khung giờ rảnh nào được tạo.</p>
                  ) : (
                    timeSlots.map(slot => (
-                     <div key={slot.id} className="p-3 border border-slate-100 rounded-xl bg-slate-50 flex justify-between items-center transition-colors hover:border-[#372660]/30">
+                     <div key={slot.id} className="p-3 border border-slate-100 rounded-xl bg-slate-50 flex justify-between items-center transition-colors hover:border-[#372660]/30 group">
                        <div>
                          <p className="text-sm font-bold text-[#372660]">{formatDate(slot.startTime)}</p>
                          <p className="text-xs text-slate-500 font-medium mt-0.5">{formatTime(slot.startTime)} - {formatTime(slot.endTime)}</p>
                        </div>
-                       <div className="text-right">
-                         <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${slot.status === 'AVAILABLE' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
-                           {slot.status === 'AVAILABLE' ? "Đang mở" : "Đã đặt"}
-                         </span>
-                         <p className="text-xs font-semibold text-slate-700 mt-1">{slot.price.toLocaleString('vi-VN')}đ</p>
+                       <div className="flex items-center gap-2">
+                         <div className="text-right">
+                           <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${slot.status === 'AVAILABLE' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+                             {slot.status === 'AVAILABLE' ? "Đang mở" : "Đã đặt"}
+                           </span>
+                           <p className="text-xs font-semibold text-slate-700 mt-1">{slot.price.toLocaleString('vi-VN')}đ</p>
+                         </div>
+                         {slot.status === 'AVAILABLE' && (
+                           <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                             <button onClick={() => openEditSlot(slot)} className="p-1 rounded-md hover:bg-blue-100 text-blue-600 transition-colors" title="Sửa">
+                               <Pencil className="w-3.5 h-3.5" />
+                             </button>
+                             <button onClick={() => handleDeleteSlot(slot.id)} className="p-1 rounded-md hover:bg-red-100 text-red-500 transition-colors" title="Xóa">
+                               <Trash2 className="w-3.5 h-3.5" />
+                             </button>
+                           </div>
+                         )}
                        </div>
                      </div>
                    ))
@@ -315,12 +385,22 @@ export default function MentorSchedulePage() {
                        {/* User & Info */}
                        <div className="flex gap-4 items-center">
                          <div className="relative shrink-0">
-                            <img src={cls.menteeAvatar || `https://ui-avatars.com/api/?name=${cls.menteeName}&background=random`} alt="Avatar" className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm" />
+                            <img 
+                              src={cls.menteeAvatar || `https://ui-avatars.com/api/?name=${cls.menteeName}&background=random`} 
+                              alt="Avatar" 
+                              className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm cursor-pointer hover:ring-2 hover:ring-[#372660]/30 transition-all" 
+                              onClick={() => handleViewMentee(cls.menteeId)}
+                            />
                          </div>
                          
                          <div>
                            <div className="flex items-center gap-3 mb-1">
-                             <h4 className="font-bold text-slate-900 text-lg">{cls.menteeName || `Học viên #${cls.menteeId}`}</h4>
+                             <h4 
+                               className="font-bold text-slate-900 text-lg cursor-pointer hover:text-[#372660] transition-colors"
+                               onClick={() => handleViewMentee(cls.menteeId)}
+                             >
+                               {cls.menteeName || `Học viên #${cls.menteeId}`}
+                             </h4>
                              <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${statusInfo.color}`}>
                                {statusInfo.text}
                              </span>
@@ -333,7 +413,7 @@ export default function MentorSchedulePage() {
                          </div>
                        </div>
 
-                       {/* Action Buttons for Bookings */}
+                       {/* Action Buttons */}
                        <div className="w-full sm:w-auto mt-2 sm:mt-0 flex flex-col sm:flex-row gap-2">
                          {cls.status === 'PENDING' && (
                             <>
@@ -391,7 +471,7 @@ export default function MentorSchedulePage() {
       {/* CREATE TIMESLOT MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
               <h3 className="font-bold text-lg text-slate-900">Mở khung giờ rảnh</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 bg-white p-1 rounded-md shadow-sm border border-slate-100">
@@ -408,63 +488,95 @@ export default function MentorSchedulePage() {
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Ngày dạy <span className="text-red-500">*</span></label>
-                <input 
-                  type="date" 
-                  value={slotDate}
-                  onChange={(e) => setSlotDate(e.target.value)}
-                  className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#372660] focus:border-[#372660] outline-none text-sm transition-all"
-                  required
-                />
+                <input type="date" value={slotDate} onChange={(e) => setSlotDate(e.target.value)}
+                  className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#372660] focus:border-[#372660] outline-none text-sm" required />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1.5">Giờ Bắt đầu <span className="text-red-500">*</span></label>
-                  <input 
-                    type="time" 
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#372660] focus:border-[#372660] outline-none text-sm transition-all"
-                    required
-                  />
+                  <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)}
+                    className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#372660] focus:border-[#372660] outline-none text-sm" required />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1.5">Giờ Kết thúc <span className="text-red-500">*</span></label>
-                  <input 
-                    type="time" 
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#372660] focus:border-[#372660] outline-none text-sm transition-all"
-                    required
-                  />
+                  <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)}
+                    className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#372660] focus:border-[#372660] outline-none text-sm" required />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Giá tiền (VNĐ) <span className="text-red-500">*</span></label>
-                <input 
-                  type="number" 
-                  step="10000"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#372660] focus:border-[#372660] outline-none text-sm transition-all bg-slate-50"
-                  required
-                />
+                <input type="number" step="10000" value={price} onChange={(e) => setPrice(e.target.value)}
+                  className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#372660] focus:border-[#372660] outline-none text-sm bg-slate-50" required />
               </div>
 
               <div className="pt-4 flex gap-3">
-                <button 
-                  type="button" 
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-50 transition-colors"
-                >
+                <button type="button" onClick={() => setIsModalOpen(false)}
+                  className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-50 transition-colors">
                   Hủy
                 </button>
-                <button 
-                  type="submit"
-                  className="flex-1 px-4 py-2.5 bg-[#372660] text-white font-bold rounded-lg hover:bg-[#2b1d4c] shadow-md transition-colors"
-                >
+                <button type="submit"
+                  className="flex-1 px-4 py-2.5 bg-[#372660] text-white font-bold rounded-lg hover:bg-[#2b1d4c] shadow-md transition-colors">
                   Lưu khung giờ
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT TIMESLOT MODAL */}
+      {editSlot && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h3 className="font-bold text-lg text-slate-900">Chỉnh sửa khung giờ</h3>
+              <button onClick={() => setEditSlot(null)} className="text-slate-400 hover:text-slate-600 bg-white p-1 rounded-md shadow-sm border border-slate-100">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleEditSlot} className="p-6 space-y-4">
+              {editError && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100 font-medium">
+                  {editError}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Ngày dạy <span className="text-red-500">*</span></label>
+                <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)}
+                  className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#372660] focus:border-[#372660] outline-none text-sm" required />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Giờ Bắt đầu <span className="text-red-500">*</span></label>
+                  <input type="time" value={editStart} onChange={(e) => setEditStart(e.target.value)}
+                    className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#372660] focus:border-[#372660] outline-none text-sm" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Giờ Kết thúc <span className="text-red-500">*</span></label>
+                  <input type="time" value={editEnd} onChange={(e) => setEditEnd(e.target.value)}
+                    className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#372660] focus:border-[#372660] outline-none text-sm" required />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Giá tiền (VNĐ) <span className="text-red-500">*</span></label>
+                <input type="number" step="10000" value={editPrice} onChange={(e) => setEditPrice(e.target.value)}
+                  className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#372660] focus:border-[#372660] outline-none text-sm bg-slate-50" required />
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button type="button" onClick={() => setEditSlot(null)}
+                  className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-50 transition-colors">
+                  Hủy
+                </button>
+                <button type="submit"
+                  className="flex-1 px-4 py-2.5 bg-[#372660] text-white font-bold rounded-lg hover:bg-[#2b1d4c] shadow-md transition-colors">
+                  Cập nhật
                 </button>
               </div>
             </form>

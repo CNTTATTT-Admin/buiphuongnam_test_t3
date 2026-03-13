@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext"
 import SettingsSidebar from "../components/profile/SettingsSidebar"
 import BasicInfoForm from "../components/profile/BasicInfoForm"
 import MentorSettingsForm from "../components/profile/MentorSettingsForm"
+import MenteeSettingsForm from "../components/profile/MenteeSettingsForm"
 import profileService from "../services/profileService"
 
 export default function ProfileSettingsPage() {
@@ -47,6 +48,8 @@ export default function ProfileSettingsPage() {
      </div>
   ); // Prevent flash / loading state
 
+  const isMentor = user.role === "mentor" || profileData?.roles?.includes("ROLE_MENTOR")
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl font-sans">
       <div className="mb-8">
@@ -61,9 +64,10 @@ export default function ProfileSettingsPage() {
           {activeTab === "profile" && (
             <div className="animate-in fade-in duration-300">
               <BasicInfoForm profile={profileData} onUpdate={handleProfileUpdate} />
-              {(user.role === "mentor" || profileData?.roles?.includes("ROLE_MENTOR")) && (
+              {isMentor && (
                  <MentorSettingsForm profile={profileData} onUpdate={handleProfileUpdate} />
               )}
+              <MenteeSettingsForm profile={profileData} onUpdate={handleProfileUpdate} />
             </div>
           )}
           

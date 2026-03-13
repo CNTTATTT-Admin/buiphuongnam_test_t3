@@ -19,4 +19,8 @@ export const userService = {
   getMentors,
   getUserById,
   getMentorTimeSlots,
+  getMenteeProfile: async (userId) => {
+    const response = await api.get(`/users/${userId}`);
+    return response;
+  },
 };

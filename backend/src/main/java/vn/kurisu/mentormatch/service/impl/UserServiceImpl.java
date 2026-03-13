@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import vn.kurisu.mentormatch.dto.request.UserCreationRequest;
 import vn.kurisu.mentormatch.dto.request.UserUpdateRequest;
 import vn.kurisu.mentormatch.dto.response.ApiResponse;
+import vn.kurisu.mentormatch.dto.response.MenteeProfileResponse;
 import vn.kurisu.mentormatch.dto.response.RoleResponse;
 import vn.kurisu.mentormatch.dto.response.UserResponse;
 import vn.kurisu.mentormatch.entity.Role;
@@ -137,13 +138,26 @@ public class UserServiceImpl implements UserService {
                         .build())
                 .collect(Collectors.toSet());
 
+        MenteeProfileResponse menteeProfileResponse = null;
+        if (user.getMenteeProfile() != null) {
+            menteeProfileResponse = MenteeProfileResponse.builder()
+                    .id(user.getMenteeProfile().getId())
+                    .currentEducation(user.getMenteeProfile().getCurrentEducation())
+                    .learningGoals(user.getMenteeProfile().getLearningGoals())
+                    .interests(user.getMenteeProfile().getInterests())
+                    .build();
+        }
+
         return UserResponse.builder()
                 .id(user.getId())
                 .userName(user.getUserName())
                 .fullName(user.getFullName())
                 .avatarUrl(user.getAvatarUrl())
+                .email(user.getEmail())
+                .phone(user.getPhone())
                 .isActive(user.getIsActive())
                 .roles(roleResponses)
+                .menteeProfile(menteeProfileResponse)
                 .build();
     }
 }

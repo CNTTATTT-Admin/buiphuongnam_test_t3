@@ -49,6 +49,16 @@ const scheduleService = {
       console.error('Error updating meeting link:', error);
       throw error;
     }
+  },
+
+  deleteTimeSlot: async (id) => {
+    const response = await api.delete(`/mentors/time-slots/${id}`);
+    return response;
+  },
+
+  updateTimeSlot: async (id, request) => {
+    const response = await api.put(`/mentors/time-slots/${id}`, request);
+    return response;
   }
 };
 

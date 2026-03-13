@@ -124,7 +124,6 @@ vn\kurisu\mentormatch\entity\TimeSlot$TimeSlotBuilder.class
 vn\kurisu\mentormatch\controller\PostController.class
 vn\kurisu\mentormatch\dto\request\BookingActionRequest$BookingActionRequestBuilder.class
 vn\kurisu\mentormatch\service\UserService.class
-com\mentormatch\config\VNPayConfig.class
 vn\kurisu\mentormatch\repository\ReviewRepository.class
 vn\kurisu\mentormatch\dto\response\MentorProfileResponse$MentorProfileResponseBuilder.class
 vn\kurisu\mentormatch\entity\Skill$SkillBuilder.class
