@@ -158,8 +158,8 @@ public class ScheduleServiceImpl implements ScheduleService {
             throw new RuntimeException("Not authorized to process this booking");
         }
 
-        if (booking.getStatus() != BookingStatus.PENDING) {
-            throw new RuntimeException("Can only process PENDING bookings");
+        if (booking.getStatus() != BookingStatus.PAID && booking.getStatus() != BookingStatus.PENDING) {
+            throw new RuntimeException("Can only process PENDING or PAID bookings");
         }
 
         if ("CONFIRM".equalsIgnoreCase(request.getAction())) {

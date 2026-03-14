@@ -98,7 +98,14 @@ export default function MenteeBookingsPage() {
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-600 border border-amber-200">
             <Clock3 className="w-3.5 h-3.5" />
-            Chờ xác nhận
+            Chờ thanh toán
+          </span>
+        );
+      case 'PAID':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600 border border-indigo-200">
+            <Clock3 className="w-3.5 h-3.5" />
+            Đã thanh toán, chờ Mentor xác nhận
           </span>
         );
       case 'CONFIRMED':
@@ -241,11 +248,13 @@ export default function MenteeBookingsPage() {
                         </>
                       )}
 
-                      {/* PENDING → show waiting state */}
-                      {booking.status === 'PENDING' && (
+                      {/* PENDING / PAID → show waiting state */}
+                      {(booking.status === 'PENDING' || booking.status === 'PAID') && (
                         <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-400 rounded-lg text-sm font-medium cursor-not-allowed">
                           <Clock3 className="w-4 h-4" />
-                          Đang chờ Mentor xác nhận
+                          {booking.status === 'PAID'
+                            ? 'Đã thanh toán, chờ Mentor xác nhận'
+                            : 'Đang chờ thanh toán'}
                         </div>
                       )}
 

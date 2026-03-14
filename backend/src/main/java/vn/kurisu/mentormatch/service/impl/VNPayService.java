@@ -87,4 +87,56 @@ public class VNPayService {
         queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
         return vnPayConfig.vnp_PayUrl + "?" + queryUrl;
     }
+
+    /**
+     * Xác thực chữ ký callback từ VNPay.
+     * Bỏ qua các tham số vnp_SecureHash, vnp_SecureHashType khi build chuỗi hash.
+     */
+    public boolean validateCallback(Map<String, String> vnpParams) {
+        if (vnpParams == null || vnpParams.isEmpty()) {
+            return false;
+        }
+
+        String receivedSecureHash = vnpParams.get("vnp_SecureHash");
+        if (receivedSecureHash == null || receivedSecureHash.isEmpty()) {
+            return false;
+        }
+
+        Map<String, String> filteredParams = new HashMap<>(vnpParams);
+        filteredParams.remove("vnp_SecureHash");
+        filteredParams.remove("vnp_SecureHashType");
+
+        List<String> fieldNames = new ArrayList<>(filteredParams.keySet());
+        Collections.sort(fieldNames);
+
+        StringBuilder hashData = new StringBuilder();
+        Iterator<String> itr = fieldNames.iterator();
+        while (itr.hasNext()) {
+            String fieldName = itr.next();
+            String fieldValue = filteredParams.get(fieldName);
+            if (fieldValue != null && fieldValue.length() > 0) {
+                hashData.append(fieldName);
+                hashData.append('=');
+                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+                if (itr.hasNext()) {
+                    hashData.append('&');
+                }
+            }
+        }
+
+        String calculatedHash = vnPayConfig.hmacSHA512(vnPayConfig.secretKey, hashData.toString());
+        return calculatedHash.equalsIgnoreCase(receivedSecureHash);
+    }
+
+    /**
+     * Kiểm tra giao dịch thành công dựa vào mã phản hồi của VNPay.
+     */
+    public boolean isPaymentSuccess(Map<String, String> vnpParams) {
+        if (vnpParams == null) {
+            return false;
+        }
+        String responseCode = vnpParams.get("vnp_ResponseCode");
+        String transactionStatus = vnpParams.get("vnp_TransactionStatus");
+        return "00".equals(responseCode) && "00".equals(transactionStatus);
+    }
 }

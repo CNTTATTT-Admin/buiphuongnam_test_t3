@@ -36,6 +36,7 @@ vn\kurisu\mentormatch\dto\response\UserResponse.class
 vn\kurisu\mentormatch\entity\MentorProfile$MentorProfileBuilder.class
 vn\kurisu\mentormatch\security\SecurityConfig.class
 vn\kurisu\mentormatch\dto\request\UserCreationRequest$UserCreationRequestBuilder.class
+vn\kurisu\mentormatch\dto\response\VNPayPaymentResponse.class
 vn\kurisu\mentormatch\dto\request\MentorProfileRequest.class
 vn\kurisu\mentormatch\dto\request\BookingRequest.class
 vn\kurisu\mentormatch\dto\response\RoleResponse$RoleResponseBuilder.class
@@ -103,6 +104,7 @@ vn\kurisu\mentormatch\service\SkillService.class
 vn\kurisu\mentormatch\entity\WithdrawalRequest$WithdrawalRequestBuilder.class
 vn\kurisu\mentormatch\dto\response\TimeSlotResponse.class
 vn\kurisu\mentormatch\entity\User.class
+vn\kurisu\mentormatch\dto\response\VNPayPaymentResponse$VNPayPaymentResponseBuilder.class
 vn\kurisu\mentormatch\entity\BookingStatus.class
 vn\kurisu\mentormatch\controller\AuthController.class
 vn\kurisu\mentormatch\dto\response\MenteeProfileResponse$MenteeProfileResponseBuilder.class
@@ -132,6 +134,7 @@ vn\kurisu\mentormatch\service\impl\ScheduleServiceImpl.class
 vn\kurisu\mentormatch\controller\MentorScheduleController.class
 vn\kurisu\mentormatch\exception\ErrorCode.class
 vn\kurisu\mentormatch\entity\MentorProfile.class
+vn\kurisu\mentormatch\controller\PaymentController.class
 vn\kurisu\mentormatch\entity\Review.class
 vn\kurisu\mentormatch\entity\SlotStatus.class
 vn\kurisu\mentormatch\repository\PostLikeRepository.class

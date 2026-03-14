@@ -1,11 +1,13 @@
 package vn.kurisu.mentormatch.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.kurisu.mentormatch.dto.request.BookingRequest;
 import vn.kurisu.mentormatch.dto.response.ApiResponse;
 import vn.kurisu.mentormatch.dto.response.BookingResponse;
+import vn.kurisu.mentormatch.dto.response.VNPayPaymentResponse;
 import vn.kurisu.mentormatch.entity.*;
 import vn.kurisu.mentormatch.exception.AppException;
 import vn.kurisu.mentormatch.exception.ErrorCode;
@@ -17,7 +19,11 @@ import vn.kurisu.mentormatch.service.BookingService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +34,10 @@ public class BookingServiceImpl implements BookingService {
     private final TimeSlotRepository timeSlotRepository;
     private final UserRepository userRepository;
     private final MentorProfileRepository mentorProfileRepository;
+    private final VNPayService vnPayService;
+
+    @Value("${frontend.paymentResultUrl:http://localhost:5173/payment-result}")
+    private String paymentResultUrl;
 
     private User getCurrentUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -44,6 +54,109 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public ApiResponse<BookingResponse> createBooking(BookingRequest request) {
+        Booking booking = createAndPersistBooking(request);
+
+        return ApiResponse.<BookingResponse>builder()
+                .result(mapToBookingResponse(booking))
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public ApiResponse<VNPayPaymentResponse> createBookingWithVNPay(BookingRequest request) {
+        Booking booking = createAndPersistBooking(request);
+
+        BigDecimal price = booking.getTimeSlot().getPrice();
+        int amount = price != null ? price.intValue() : 0;
+
+        String orderInfo = "Thanh toan buoi hoc #" + booking.getId()
+                + " voi mentor " + booking.getTimeSlot().getMentor().getFullName();
+
+        String paymentUrl = vnPayService.createPaymentUrl(amount, orderInfo, booking.getId().toString());
+
+        VNPayPaymentResponse vnpResponse = VNPayPaymentResponse.builder()
+                .booking(mapToBookingResponse(booking))
+                .paymentUrl(paymentUrl)
+                .build();
+
+        return ApiResponse.<VNPayPaymentResponse>builder()
+                .result(vnpResponse)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public String handleVNPayReturn(Map<String, String> vnpParams) {
+        boolean validSignature = vnPayService.validateCallback(vnpParams);
+        String defaultRedirect = paymentResultUrl + "?success=false&message=" +
+                urlEncode("Chữ ký không hợp lệ");
+
+        if (!validSignature) {
+            return defaultRedirect;
+        }
+
+        String txnRef = vnpParams.get("vnp_TxnRef");
+        if (txnRef == null) {
+            return paymentResultUrl + "?success=false&message=" +
+                    urlEncode("Thiếu mã giao dịch");
+        }
+
+        Integer bookingId;
+        try {
+            bookingId = Integer.valueOf(txnRef);
+        } catch (NumberFormatException e) {
+            return paymentResultUrl + "?success=false&message=" +
+                    urlEncode("Mã giao dịch không hợp lệ");
+        }
+
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElse(null);
+        if (booking == null) {
+            return paymentResultUrl + "?success=false&message=" +
+                    urlEncode("Không tìm thấy booking");
+        }
+
+        boolean success = vnPayService.isPaymentSuccess(vnpParams);
+        String message;
+
+        if (success) {
+            if (booking.getStatus() == BookingStatus.PENDING) {
+                booking.setStatus(BookingStatus.PAID);
+
+                TimeSlot timeSlot = booking.getTimeSlot();
+                if (timeSlot != null && timeSlot.getStatus() == SlotStatus.AVAILABLE) {
+                    timeSlot.setStatus(SlotStatus.BOOKED);
+                    timeSlotRepository.save(timeSlot);
+                }
+
+                bookingRepository.save(booking);
+            }
+            message = "Thanh toán thành công";
+        } else {
+            if (booking.getStatus() == BookingStatus.PENDING) {
+                booking.setStatus(BookingStatus.CANCELLED);
+                bookingRepository.save(booking);
+
+                TimeSlot timeSlot = booking.getTimeSlot();
+                if (timeSlot != null && timeSlot.getStatus() == SlotStatus.BOOKED) {
+                    timeSlot.setStatus(SlotStatus.AVAILABLE);
+                    timeSlotRepository.save(timeSlot);
+                }
+            }
+            message = "Thanh toán thất bại hoặc bị hủy";
+        }
+
+        return paymentResultUrl
+                + "?success=" + success
+                + "&bookingId=" + booking.getId()
+                + "&message=" + urlEncode(message);
+    }
+
+    private String urlEncode(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
+
+    private Booking createAndPersistBooking(BookingRequest request) {
         User currentMentee = getCurrentUser();
 
         TimeSlot timeSlot = timeSlotRepository.findById(request.getTimeSlotId())
@@ -57,11 +170,7 @@ public class BookingServiceImpl implements BookingService {
             throw new RuntimeException("You cannot book your own time slot");
         }
 
-        // Update slot status
-        timeSlot.setStatus(SlotStatus.BOOKED);
-        timeSlotRepository.save(timeSlot);
-
-        // Create booking
+        // Tạo booking ở trạng thái PENDING, giữ slot ở trạng thái AVAILABLE
         Booking booking = Booking.builder()
                 .mentee(currentMentee)
                 .timeSlot(timeSlot)
@@ -69,11 +178,7 @@ public class BookingServiceImpl implements BookingService {
                 .status(BookingStatus.PENDING)
                 .build();
 
-        booking = bookingRepository.save(booking);
-
-        return ApiResponse.<BookingResponse>builder()
-                .result(mapToBookingResponse(booking))
-                .build();
+        return bookingRepository.save(booking);
     }
 
     @Override
@@ -159,6 +264,7 @@ public class BookingServiceImpl implements BookingService {
                 .meetingLink(booking.getMeetingLink())
                 .status(booking.getStatus())
                 .createdAt(booking.getCreatedAt())
+                .price(booking.getTimeSlot().getPrice())
                 .build();
     }
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { Calendar as CalendarIcon, CreditCard } from "lucide-react"
 import BookingModal from "./BookingModal"
-import { bookingService } from "../../services/bookingService"
+import { paymentService } from "../../services/paymentService"
 
 export default function BookingWidget({ timeSlots = [], onBookingSuccess }) {
   // Group slots by YYYY-MM-DD
@@ -75,20 +75,23 @@ export default function BookingWidget({ timeSlots = [], onBookingSuccess }) {
 
   const handleConfirmBooking = async (slotId, menteeNotes) => {
     try {
-      const res = await bookingService.createBooking({
+      const res = await paymentService.createVNPayBookingPayment({
         timeSlotId: slotId,
-        menteeNotes: menteeNotes
+        menteeNotes: menteeNotes,
       });
-      if (res.code === 1000) {
-        alert("Thanh toán ảo thành công! Lịch học đã được đặt.");
+
+      if (res.code === 1000 && res.result?.paymentUrl) {
+        const { paymentUrl } = res.result;
         setIsModalOpen(false);
         setSelectedSlotId(null);
         if (onBookingSuccess) onBookingSuccess();
+        window.location.href = paymentUrl;
       } else {
-        alert("Lỗi khi đặt lịch: " + res.message);
+        alert("Lỗi khi tạo thanh toán VNPAY: " + (res.message || "Không rõ nguyên nhân"));
+        setIsModalOpen(false);
       }
     } catch (err) {
-      alert("Hệ thống gián đoạn, vui lòng tải lại trang.");
+      alert(err.response?.data?.message || "Hệ thống gián đoạn, vui lòng thử lại.");
       setIsModalOpen(false);
     }
   };

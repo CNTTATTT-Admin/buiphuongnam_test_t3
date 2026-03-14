@@ -35,7 +35,7 @@ public class Booking {
     private String meetingLink;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20, columnDefinition = "VARCHAR(20)")
     @Builder.Default
     private BookingStatus status = BookingStatus.PENDING;
 

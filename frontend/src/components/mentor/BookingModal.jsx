@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Calendar as CalendarIcon, Clock, CreditCard, Sparkles } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Clock, CreditCard } from 'lucide-react';
 
 export default function BookingModal({ isOpen, onClose, slot, dayInfo, onConfirm }) {
   const [menteeNotes, setMenteeNotes] = useState('');
@@ -13,11 +13,11 @@ export default function BookingModal({ isOpen, onClose, slot, dayInfo, onConfirm
 
   const handleConfirm = async () => {
     setIsProcessing(true);
-    // Simulate a network wait for mock payment
-    setTimeout(() => {
-      onConfirm(slot.id, menteeNotes);
+    try {
+      await onConfirm(slot.id, menteeNotes);
+    } finally {
       setIsProcessing(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -78,8 +78,9 @@ export default function BookingModal({ isOpen, onClose, slot, dayInfo, onConfirm
           </div>
 
           <div className="bg-emerald-50 text-emerald-700 text-xs p-3 rounded-lg flex items-start gap-2 border border-emerald-100">
-            <Sparkles className="w-4 h-4 shrink-0 mt-0.5" />
-            <p>Hệ thống đang chạy chế độ Mock Payment. Giao dịch sẽ luôn thành công mà không trừ tiền thật.</p>
+            <p>
+              Sau khi xác nhận, bạn sẽ được chuyển sang cổng thanh toán VNPAY để hoàn tất giao dịch.
+            </p>
           </div>
         </div>
 

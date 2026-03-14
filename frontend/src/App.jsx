@@ -21,6 +21,7 @@ import AdminSkillPage from './pages/admin/AdminSkillPage'
 import MentorWalletPage from './pages/MentorWalletPage'
 import AdminWithdrawalPage from './pages/admin/AdminWithdrawalPage'
 import MenteeProfilePage from './pages/MenteeProfilePage'
+import PaymentResultPage from './pages/PaymentResultPage'
 
 // User App Layout (with top Navbar)
 function UserLayout({ children }) {
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="/wallet" element={<UserLayout><div className="container mx-auto px-4 py-8"><div className="flex gap-8"><Sidebar /><div className="flex-1"><MentorWalletPage /></div></div></div></UserLayout>} />
           <Route path="/register-mentor" element={<UserLayout><MentorRegistrationPage /></UserLayout>} />
           <Route path="/mentee/:id" element={<UserLayout><MenteeProfilePage /></UserLayout>} />
+          <Route path="/payment-result" element={<UserLayout><div className="container mx-auto px-4 py-8"><PaymentResultPage /></div></UserLayout>} />
           
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>

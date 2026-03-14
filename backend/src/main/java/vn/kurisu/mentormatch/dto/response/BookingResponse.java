@@ -1,8 +1,13 @@
 package vn.kurisu.mentormatch.dto.response;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import vn.kurisu.mentormatch.entity.BookingStatus;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
@@ -25,4 +30,5 @@ public class BookingResponse {
     private String meetingLink;
     private BookingStatus status;
     private LocalDateTime createdAt;
+    private BigDecimal price;
 }
