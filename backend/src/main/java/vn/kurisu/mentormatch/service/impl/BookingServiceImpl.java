@@ -4,7 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import vn.kurisu.mentormatch.config.RabbitMQConfig;
 import vn.kurisu.mentormatch.dto.request.BookingRequest;
+import vn.kurisu.mentormatch.dto.request.NotificationEventDto;
 import vn.kurisu.mentormatch.dto.response.ApiResponse;
 import vn.kurisu.mentormatch.dto.response.BookingResponse;
 import vn.kurisu.mentormatch.dto.response.VNPayPaymentResponse;
@@ -168,9 +171,11 @@ public class BookingServiceImpl implements BookingService {
                         "PAYMENT_SUCCESS",
                         booking.getId()
                 );
+                
             }
             paymentRepository.save(payment);
             message = "Thanh toán thành công";
+           
         } else {
             payment.setStatus(PaymentStatus.FAILED);
             if (booking.getStatus() == BookingStatus.PENDING) {

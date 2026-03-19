@@ -16,6 +16,7 @@ import vn.kurisu.mentormatch.exception.ErrorCode;
 import vn.kurisu.mentormatch.repository.NotificationRepository;
 import vn.kurisu.mentormatch.repository.UserRepository;
 import vn.kurisu.mentormatch.service.NotificationService;
+import vn.kurisu.mentormatch.dto.request.NotificationEventDto;
 
 import java.util.List;
 
@@ -25,6 +26,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final RabbitMQProducer rabbitMQProducer;
 
     private User getCurrentUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -108,6 +110,17 @@ public class NotificationServiceImpl implements NotificationService {
                 .isRead(false)
                 .build();
         notificationRepository.save(notification);
+
+        // Push event to RabbitMQ for Email sending
+        NotificationEventDto eventDto = NotificationEventDto.builder()
+                .userId(user.getId().longValue())
+                .title(title)
+                .message(message)
+                .type(type)
+                .referenceId(referenceId != null ? referenceId.longValue() : null)
+                .build();
+                
+        rabbitMQProducer.sendNotificationEvent(eventDto);
     }
 
     private NotificationResponse mapToResponse(Notification n) {

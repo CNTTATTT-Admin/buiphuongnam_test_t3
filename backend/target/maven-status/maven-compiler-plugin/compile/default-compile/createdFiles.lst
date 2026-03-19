@@ -4,7 +4,6 @@ vn\kurisu\mentormatch\dto\request\RoleRequest$RoleRequestBuilder.class
 vn\kurisu\mentormatch\dto\request\RoleRequest.class
 vn\kurisu\mentormatch\controller\PostInteractionController.class
 vn\kurisu\mentormatch\service\RoleService.class
-vn\kurisu\mentormatch\service\impl\BookingServiceImpl.class
 vn\kurisu\mentormatch\entity\MenteeProfile$MenteeProfileBuilder.class
 vn\kurisu\mentormatch\dto\request\CommentRequest$CommentRequestBuilder.class
 vn\kurisu\mentormatch\repository\TimeSlotRepository.class
