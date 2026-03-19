@@ -235,15 +235,22 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public ApiResponse<List<BookingResponse>> getMyTraineeBookings() {
+    public ApiResponse<org.springframework.data.domain.Page<BookingResponse>> getMyTraineeBookings(org.springframework.data.domain.Pageable pageable, String status) {
         User currentMentee = getCurrentUser();
 
-        List<BookingResponse> responses = bookingRepository.findByMenteeIdOrderByCreatedAtDesc(currentMentee.getId())
-                .stream()
-                .map(this::mapToBookingResponse)
-                .collect(Collectors.toList());
+        BookingStatus bookingStatus = null;
+        if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("ALL")) {
+            try {
+                bookingStatus = BookingStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Ignore invalid status
+            }
+        }
 
-        return ApiResponse.<List<BookingResponse>>builder()
+        org.springframework.data.domain.Page<BookingResponse> responses = bookingRepository.findByMenteeIdOrderByCreatedAtDesc(currentMentee.getId(), bookingStatus, pageable)
+                .map(this::mapToBookingResponse);
+
+        return ApiResponse.<org.springframework.data.domain.Page<BookingResponse>>builder()
                 .result(responses)
                 .build();
     }

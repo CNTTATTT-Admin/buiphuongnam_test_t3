@@ -15,7 +15,7 @@ public interface ScheduleService {
     ApiResponse<TimeSlotResponse> updateTimeSlot(Integer id, TimeSlotRequest request);
     ApiResponse<TimeSlotResponse> createTimeSlot(TimeSlotRequest request);
     ApiResponse<List<TimeSlotResponse>> getMyTimeSlots();
-    ApiResponse<List<BookingResponse>> getMyBookings();
+    ApiResponse<org.springframework.data.domain.Page<BookingResponse>> getMyBookings(org.springframework.data.domain.Pageable pageable, String status);
     ApiResponse<BookingResponse> processBooking(Integer bookingId, BookingActionRequest request);
     ApiResponse<BookingResponse> updateMeetingLink(Integer bookingId, MeetingLinkRequest request);
 }

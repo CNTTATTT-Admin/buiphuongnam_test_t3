@@ -21,9 +21,10 @@ const scheduleService = {
     }
   },
 
-  getMyBookings: async () => {
+  getMyBookings: async (page = 0, size = 10, status = "ALL") => {
     try {
-      const response = await api.get('/mentors/bookings');
+      const statusParam = status !== "ALL" ? `&status=${status}` : "";
+      const response = await api.get(`/mentors/bookings?page=${page}&size=${size}${statusParam}`);
       return response;
     } catch (error) {
       console.error('Error fetching bookings:', error);

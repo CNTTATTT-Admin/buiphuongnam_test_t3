@@ -11,9 +11,10 @@ export const bookingService = {
     }
   },
 
-  getMyTraineeBookings: async () => {
+  getMyTraineeBookings: async (page = 0, size = 5, status = "ALL") => {
     try {
-      const response = await api.get('/bookings/my-bookings');
+      const statusParam = status !== "ALL" ? `&status=${status}` : "";
+      const response = await api.get(`/bookings/my-bookings?page=${page}&size=${size}${statusParam}`);
       return response;
     } catch (error) {
       console.error('Error fetching mentee bookings:', error);

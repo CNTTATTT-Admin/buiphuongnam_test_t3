@@ -15,7 +15,7 @@ public interface BookingService {
 
     String handleVNPayReturn(Map<String, String> vnpParams);
 
-    ApiResponse<List<BookingResponse>> getMyTraineeBookings();
+    ApiResponse<org.springframework.data.domain.Page<BookingResponse>> getMyTraineeBookings(org.springframework.data.domain.Pageable pageable, String status);
 
     ApiResponse<BookingResponse> cancelBooking(Integer id);
 

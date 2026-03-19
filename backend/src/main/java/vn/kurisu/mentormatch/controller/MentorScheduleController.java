@@ -40,8 +40,13 @@ public class MentorScheduleController {
     }
 
     @GetMapping("/bookings")
-    public ApiResponse<List<BookingResponse>> getMyBookings() {
-        return scheduleService.getMyBookings();
+    public ApiResponse<org.springframework.data.domain.Page<BookingResponse>> getMyBookings(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status
+    ) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        return scheduleService.getMyBookings(pageable, status);
     }
 
     @PutMapping("/bookings/{bookingId}/status")

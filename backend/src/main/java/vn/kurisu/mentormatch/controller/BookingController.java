@@ -23,8 +23,13 @@ public class BookingController {
     }
 
     @GetMapping("/my-bookings")
-    public ApiResponse<List<BookingResponse>> getMyTraineeBookings() {
-        return bookingService.getMyTraineeBookings();
+    public ApiResponse<org.springframework.data.domain.Page<BookingResponse>> getMyTraineeBookings(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status
+    ) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        return bookingService.getMyTraineeBookings(pageable, status);
     }
 
     @PutMapping("/{id}/complete")

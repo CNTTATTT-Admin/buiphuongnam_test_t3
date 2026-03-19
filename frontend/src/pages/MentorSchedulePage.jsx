@@ -9,6 +9,10 @@ export default function MentorSchedulePage() {
   const [timeSlots, setTimeSlots] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
+  const [statusFilter, setStatusFilter] = useState("ALL")
+  const size = 10
 
   // Calendar state
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -32,17 +36,25 @@ export default function MentorSchedulePage() {
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [page, statusFilter])
+
+  const handleStatusChange = (newStatus) => {
+    setStatusFilter(newStatus)
+    setPage(0)
+  }
 
   const fetchData = async () => {
     try {
       setLoading(true)
       const [bookingsRes, slotsRes] = await Promise.all([
-        scheduleService.getMyBookings(),
+        scheduleService.getMyBookings(page, size, statusFilter),
         scheduleService.getMyTimeSlots()
       ])
       
-      if (bookingsRes.code === 1000) setBookings(bookingsRes.result)
+      if (bookingsRes.code === 1000) {
+        setBookings(bookingsRes.result.content)
+        setTotalPages(bookingsRes.result.totalPages)
+      }
       if (slotsRes.code === 1000) setTimeSlots(slotsRes.result)
     } catch (error) {
       console.error("Failed to fetch schedule data", error)
@@ -160,6 +172,7 @@ export default function MentorSchedulePage() {
   const getStatusDisplay = (status) => {
     switch (status) {
       case 'PENDING': return { text: "Chờ xác nhận", color: "bg-amber-100 text-amber-700" }
+      case 'PAID': return { text: "Đã thanh toán", color: "bg-indigo-100 text-indigo-700" }
       case 'CONFIRMED': return { text: "Đã xác nhận", color: "bg-blue-100 text-blue-700" }
       case 'COMPLETED': return { text: "Đã hoàn thành", color: "bg-green-100 text-green-700" }
       case 'REJECTED': return { text: "Đã từ chối", color: "bg-red-100 text-red-700" }
@@ -363,6 +376,23 @@ export default function MentorSchedulePage() {
                </span>
              </div>
 
+             {/* Status Filter */}
+             <div className="flex flex-nowrap overflow-x-auto gap-2 mb-4 pb-1 scrollbar-hide">
+               {['ALL', 'PENDING', 'PAID', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'REJECTED'].map(st => (
+                 <button 
+                   key={st}
+                   onClick={() => handleStatusChange(st)}
+                   className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
+                     statusFilter === st 
+                       ? 'bg-[#372660] text-white shadow-sm' 
+                       : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                   }`}
+                 >
+                   {st === 'ALL' ? 'Tất cả' : getStatusDisplay(st).text}
+                 </button>
+               ))}
+             </div>
+
              <div className="space-y-4">
                 {loading ? (
                   <div className="text-center py-10 text-slate-400">Đang tải lịch học...</div>
@@ -415,7 +445,7 @@ export default function MentorSchedulePage() {
 
                        {/* Action Buttons */}
                        <div className="w-full sm:w-auto mt-2 sm:mt-0 flex flex-col sm:flex-row gap-2">
-                         {cls.status === 'PENDING' && (
+                         {(cls.status === 'PENDING' || cls.status === 'PAID') && (
                             <>
                               <button 
                                 onClick={() => handleBookingAction(cls.id, 'REJECT')}
@@ -464,6 +494,41 @@ export default function MentorSchedulePage() {
                    )})
                 )}
              </div>
+             
+             {/* Pagination */}
+             {totalPages > 1 && (
+               <div className="flex items-center justify-center gap-2 mt-6">
+                 <button 
+                   onClick={() => setPage(p => Math.max(0, p - 1))}
+                   disabled={page === 0}
+                   className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                 >
+                   <ChevronLeft className="w-5 h-5" />
+                 </button>
+                 <div className="flex gap-1">
+                   {[...Array(totalPages)].map((_, i) => (
+                     <button
+                       key={i}
+                       onClick={() => setPage(i)}
+                       className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-colors ${
+                         page === i 
+                           ? 'bg-[#372660] text-white' 
+                           : 'text-slate-600 hover:bg-slate-50'
+                       }`}
+                     >
+                       {i + 1}
+                     </button>
+                   ))}
+                 </div>
+                 <button 
+                   onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                   disabled={page === totalPages - 1}
+                   className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                 >
+                   <ChevronRight className="w-5 h-5" />
+                 </button>
+               </div>
+             )}
           </div>
         </div>
       </div>

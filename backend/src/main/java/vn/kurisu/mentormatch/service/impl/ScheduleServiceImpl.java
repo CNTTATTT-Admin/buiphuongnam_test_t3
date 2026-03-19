@@ -136,14 +136,22 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
-    public ApiResponse<List<BookingResponse>> getMyBookings() {
+    public ApiResponse<org.springframework.data.domain.Page<BookingResponse>> getMyBookings(org.springframework.data.domain.Pageable pageable, String status) {
         User mentor = getCurrentUser();
-        List<BookingResponse> bookings = bookingRepository.findBookingsByMentorId(mentor.getId())
-                .stream()
-                .map(this::mapToBookingResponse)
-                .collect(Collectors.toList());
+        
+        BookingStatus bookingStatus = null;
+        if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("ALL")) {
+            try {
+                bookingStatus = BookingStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Ignore invalid status
+            }
+        }
+        
+        org.springframework.data.domain.Page<BookingResponse> bookings = bookingRepository.findBookingsByMentorId(mentor.getId(), bookingStatus, pageable)
+                .map(this::mapToBookingResponse);
 
-        return ApiResponse.<List<BookingResponse>>builder()
+        return ApiResponse.<org.springframework.data.domain.Page<BookingResponse>>builder()
                 .result(bookings)
                 .build();
     }

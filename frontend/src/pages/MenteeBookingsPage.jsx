@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Calendar, Video, CheckCircle, Clock3, Star, AlertTriangle, X, Send } from 'lucide-react';
+import { Clock, Calendar, Video, CheckCircle, Clock3, Star, AlertTriangle, X, Send, ChevronLeft, ChevronRight } from 'lucide-react';
 import { bookingService } from '../services/bookingService';
 
 export default function MenteeBookingsPage() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState(null);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const size = 10;
 
   // Review modal state
   const [reviewModal, setReviewModal] = useState(null); // bookingId
@@ -17,16 +21,22 @@ export default function MenteeBookingsPage() {
 
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [page, statusFilter]);
+
+  const handleStatusChange = (newStatus) => {
+    setStatusFilter(newStatus);
+    setPage(0);
+  };
 
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      const res = await bookingService.getMyTraineeBookings();
+      const res = await bookingService.getMyTraineeBookings(page, size, statusFilter);
       if (res.code === 1000) {
-        setBookings(res.result);
+        setBookings(res.result.content);
+        setTotalPages(res.result.totalPages);
         // Check which completed bookings already have reviews
-        const completed = res.result.filter(b => b.status === 'COMPLETED');
+        const completed = res.result.content.filter(b => b.status === 'COMPLETED');
         const reviewed = new Set();
         for (const b of completed) {
           try {
@@ -163,6 +173,33 @@ export default function MenteeBookingsPage() {
         </div>
       )}
 
+      {/* Status Filter */}
+      <div className="px-6 py-3 border-b border-slate-100 bg-slate-50/50">
+        <div className="flex flex-nowrap overflow-x-auto gap-2 scrollbar-hide">
+          {[
+            { id: 'ALL', label: 'Tất cả' },
+            { id: 'PENDING', label: 'Chờ thanh toán' },
+            { id: 'PAID', label: 'Đã thanh toán' },
+            { id: 'CONFIRMED', label: 'Đã xác nhận' },
+            { id: 'COMPLETED', label: 'Đã hoàn thành' },
+            { id: 'CANCELLED', label: 'Đã hủy' },
+            { id: 'REJECTED', label: 'Đã từ chối' }
+          ].map(st => (
+            <button 
+              key={st.id}
+              onClick={() => handleStatusChange(st.id)}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
+                statusFilter === st.id 
+                  ? 'bg-[#372660] text-white shadow-sm' 
+                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              {st.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="p-6">
         {bookings.length === 0 ? (
           <div className="text-center py-12">
@@ -292,6 +329,40 @@ export default function MenteeBookingsPage() {
           </div>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 p-6 pt-0">
+          <button 
+            onClick={() => setPage(p => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <div className="flex gap-1">
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setPage(i)}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-colors ${
+                  page === i 
+                    ? 'bg-[#372660] text-white' 
+                    : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+          <button 
+            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+            disabled={page === totalPages - 1}
+            className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      )}
 
       {/* Review Modal */}
       {reviewModal && (
