@@ -30,6 +30,11 @@ public class PaymentController {
         return bookingService.createBookingWithVNPay(request);
     }
 
+    @GetMapping("/payments/vnpay/booking/{id}")
+    public ApiResponse<VNPayPaymentResponse> payExistingBooking(@org.springframework.web.bind.annotation.PathVariable Integer id) {
+        return bookingService.payExistingBooking(id);
+    }
+
     @GetMapping("/payment/vnpay-return")
     public void handleVnpayReturn(HttpServletRequest request, HttpServletResponse response) throws IOException {
         Map<String, String[]> parameterMap = request.getParameterMap();

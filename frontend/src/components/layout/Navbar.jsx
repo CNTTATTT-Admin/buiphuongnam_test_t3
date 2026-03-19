@@ -4,6 +4,7 @@ import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { useAuth } from "../../contexts/AuthContext"
+import NotificationDropdown from "./NotificationDropdown"
 
 export default function Navbar() {
   const { user, logout } = useAuth()
@@ -37,10 +38,7 @@ export default function Navbar() {
 
         {/* Actions & Profile */}
         <div className="flex items-center justify-end gap-5 w-64 shrink-0">
-          <Button variant="ghost" size="icon" className="relative text-slate-600 hover:text-primary">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 border-2 border-white"></span>
-          </Button>
+          {user && <NotificationDropdown />}
 
           {user ? (
             <div className="flex items-center gap-3">

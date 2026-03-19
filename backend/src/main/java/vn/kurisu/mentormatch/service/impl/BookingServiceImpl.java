@@ -35,6 +35,8 @@ public class BookingServiceImpl implements BookingService {
     private final UserRepository userRepository;
     private final MentorProfileRepository mentorProfileRepository;
     private final VNPayService vnPayService;
+    private final vn.kurisu.mentormatch.repository.PaymentRepository paymentRepository;
+    private final vn.kurisu.mentormatch.service.NotificationService notificationService;
 
     @Value("${frontend.paymentResultUrl:http://localhost:5173/payment-result}")
     private String paymentResultUrl;
@@ -119,7 +121,28 @@ public class BookingServiceImpl implements BookingService {
         boolean success = vnPayService.isPaymentSuccess(vnpParams);
         String message;
 
+        String vnpAmountStr = vnpParams.get("vnp_Amount");
+        BigDecimal amount = BigDecimal.ZERO;
+        if (vnpAmountStr != null && !vnpAmountStr.isEmpty()) {
+            try {
+                // VNPay amount is multiplied by 100
+                amount = new BigDecimal(vnpAmountStr).divide(new BigDecimal(100));
+            } catch (NumberFormatException e) {
+                // ignore
+            }
+        }
+
+        String vnpTransactionNo = vnpParams.get("vnp_TransactionNo");
+
+        Payment payment = Payment.builder()
+                .booking(booking)
+                .vnpayTxnRef(vnpTransactionNo)
+                .amount(amount)
+                .paidAt(java.time.LocalDateTime.now())
+                .build();
+
         if (success) {
+            payment.setStatus(PaymentStatus.SUCCESS);
             if (booking.getStatus() == BookingStatus.PENDING) {
                 booking.setStatus(BookingStatus.PAID);
 
@@ -130,9 +153,26 @@ public class BookingServiceImpl implements BookingService {
                 }
 
                 bookingRepository.save(booking);
+                
+                notificationService.sendNotification(
+                        booking.getTimeSlot().getMentor(),
+                        "Thanh toán ca học mới",
+                        "Mentee " + booking.getMentee().getFullName() + " đã thanh toán cho ca học #" + booking.getId() + ". Vui lòng chờ xem thông tin để xác nhận.",
+                        "PAYMENT_SUCCESS",
+                        booking.getId()
+                );
+                notificationService.sendNotification(
+                        booking.getMentee(),
+                        "Thanh toán thành công",
+                        "Bạn đã thanh toán thành công cho ca học #" + booking.getId() + ".",
+                        "PAYMENT_SUCCESS",
+                        booking.getId()
+                );
             }
+            paymentRepository.save(payment);
             message = "Thanh toán thành công";
         } else {
+            payment.setStatus(PaymentStatus.FAILED);
             if (booking.getStatus() == BookingStatus.PENDING) {
                 booking.setStatus(BookingStatus.CANCELLED);
                 bookingRepository.save(booking);
@@ -143,6 +183,7 @@ public class BookingServiceImpl implements BookingService {
                     timeSlotRepository.save(timeSlot);
                 }
             }
+            paymentRepository.save(payment);
             message = "Thanh toán thất bại hoặc bị hủy";
         }
 
@@ -178,7 +219,17 @@ public class BookingServiceImpl implements BookingService {
                 .status(BookingStatus.PENDING)
                 .build();
 
-        return bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
+        
+        notificationService.sendNotification(
+                timeSlot.getMentor(),
+                "Yêu cầu đặt lịch mới",
+                "Mentee " + currentMentee.getFullName() + " vừa đặt lịch ca học của bạn (ca học #" + savedBooking.getId() + "). Vui lòng chờ Mentee thanh toán.",
+                "BOOKING_CREATED",
+                savedBooking.getId()
+        );
+
+        return savedBooking;
     }
 
     @Override
@@ -192,6 +243,15 @@ public class BookingServiceImpl implements BookingService {
         }
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
+
+        notificationService.sendNotification(
+                booking.getTimeSlot().getMentor(),
+                "Ca học bị hủy",
+                "Mentee " + currentUser.getFullName() + " đã hủy ca học #" + booking.getId() + ".",
+                "BOOKING_CANCELLED",
+                booking.getId()
+        );
+
         return ApiResponse.<BookingResponse>builder()
                 .result(mapToBookingResponse(booking))
                 .build();
@@ -226,11 +286,52 @@ public class BookingServiceImpl implements BookingService {
                     mentorProfile.getWalletBalance().add(timeSlot.getPrice())
             );
             mentorProfileRepository.save(mentorProfile);
+            
+            notificationService.sendNotification(
+                    mentor,
+                    "Tiền được cộng vào ví",
+                    "Ca học #" + booking.getId() + " đã hoàn thành. Hệ thống đã cộng " + timeSlot.getPrice() + " VND vào ví của bạn.",
+                    "BOOKING_COMPLETED",
+                    booking.getId()
+            );
         }
 
         return ApiResponse.<BookingResponse>builder()
                 .result(mapToBookingResponse(booking))
                 .message("Booking completed. " + timeSlot.getPrice() + " VND transferred to mentor's wallet.")
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public ApiResponse<VNPayPaymentResponse> payExistingBooking(Integer bookingId) {
+        User currentUser = getCurrentUser();
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if (!booking.getMentee().getId().equals(currentUser.getId())) {
+             throw new RuntimeException("You are not authorized to pay for this booking");
+        }
+
+        if (booking.getStatus() != BookingStatus.PENDING) {
+             throw new RuntimeException("Only pending bookings can be paid");
+        }
+
+        BigDecimal price = booking.getTimeSlot().getPrice();
+        int amount = price != null ? price.intValue() : 0;
+
+        String orderInfo = "Thanh toan buoi hoc #" + booking.getId()
+                + " voi mentor " + booking.getTimeSlot().getMentor().getFullName();
+
+        String paymentUrl = vnPayService.createPaymentUrl(amount, orderInfo, booking.getId().toString());
+
+        VNPayPaymentResponse vnpResponse = VNPayPaymentResponse.builder()
+                .booking(mapToBookingResponse(booking))
+                .paymentUrl(paymentUrl)
+                .build();
+
+        return ApiResponse.<VNPayPaymentResponse>builder()
+                .result(vnpResponse)
                 .build();
     }
 

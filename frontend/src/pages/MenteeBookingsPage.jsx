@@ -55,6 +55,8 @@ export default function MenteeBookingsPage() {
     }
   };
 
+  const [submittingPayment, setSubmittingPayment] = useState(false);
+
   const handleComplete = async (bookingId) => {
     if (!window.confirm('Xác nhận hoàn thành ca học này? Số tiền sẽ được chuyển vào ví của Mentor.')) return;
     try {
@@ -65,6 +67,22 @@ export default function MenteeBookingsPage() {
       }
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.message || 'Có lỗi xảy ra' });
+    }
+  };
+
+  const handlePayNow = async (bookingId) => {
+    try {
+      setSubmittingPayment(true);
+      const res = await bookingService.payExistingBooking(bookingId);
+      if (res.code === 1000 && res.result?.paymentUrl) {
+        window.location.href = res.result.paymentUrl;
+      } else {
+        setMessage({ type: 'error', text: 'Không thể tạo link thanh toán' });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.message || 'Lỗi khi thanh toán' });
+    } finally {
+      setSubmittingPayment(false);
     }
   };
 
@@ -285,13 +303,28 @@ export default function MenteeBookingsPage() {
                         </>
                       )}
 
-                      {/* PENDING / PAID → show waiting state */}
-                      {(booking.status === 'PENDING' || booking.status === 'PAID') && (
+                      {/* PAID → show waiting state */}
+                      {booking.status === 'PAID' && (
                         <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-400 rounded-lg text-sm font-medium cursor-not-allowed">
                           <Clock3 className="w-4 h-4" />
-                          {booking.status === 'PAID'
-                            ? 'Đã thanh toán, chờ Mentor xác nhận'
-                            : 'Đang chờ thanh toán'}
+                          Đã thanh toán, chờ Mentor xác nhận
+                        </div>
+                      )}
+
+                      {/* PENDING → show Pay Now button */}
+                      {booking.status === 'PENDING' && (
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 text-slate-400 rounded-lg text-sm font-medium">
+                            <Clock3 className="w-4 h-4" />
+                            Đang chờ
+                          </div>
+                          <button
+                            onClick={() => handlePayNow(booking.id)}
+                            disabled={submittingPayment}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-[#372660] text-white hover:bg-[#2b1d4c] rounded-lg text-sm font-bold transition-colors shadow-sm disabled:opacity-50"
+                          >
+                            Thanh toán ngay
+                          </button>
                         </div>
                       )}
 

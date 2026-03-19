@@ -20,4 +20,6 @@ public interface BookingService {
     ApiResponse<BookingResponse> cancelBooking(Integer id);
 
     ApiResponse<BookingResponse> completeBooking(Integer id);
+
+    ApiResponse<vn.kurisu.mentormatch.dto.response.VNPayPaymentResponse> payExistingBooking(Integer bookingId);
 }
