@@ -3,5 +3,6 @@ package vn.kurisu.mentormatch.entity;
 public enum PaymentStatus {
     SUCCESS,
     FAILED,
-    PENDING
+    PENDING,
+    REFUND_DEDUCTION
 }

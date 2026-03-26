@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Calendar, Clock, ChevronLeft, ChevronRight, Video, FileText, PlusCircle, CheckCircle, Clock3, X, User, Pencil, Trash2 } from "lucide-react"
+import { Calendar, Clock, ChevronLeft, ChevronRight, Video, FileText, PlusCircle, CheckCircle, Clock3, X, User, Pencil, Trash2, AlertTriangle, MessageSquare } from "lucide-react"
 import scheduleService from "../services/scheduleService"
+import { disputeService } from "../services/disputeService"
 
 export default function MentorSchedulePage() {
   const navigate = useNavigate()
@@ -33,6 +34,15 @@ export default function MentorSchedulePage() {
   const [editPrice, setEditPrice] = useState("")
   const [editError, setEditError] = useState("")
 
+  // Dispute state
+  const [disputeModalOpen, setDisputeModalOpen] = useState(false)
+  const [disputeBooking, setDisputeBooking] = useState(null)
+  const [disputeReason, setDisputeReason] = useState("")
+  const [disputeError, setDisputeError] = useState("")
+  const [disputeSubmitting, setDisputeSubmitting] = useState(false)
+  const [mentorDisputes, setMentorDisputes] = useState([])
+  const [showDisputes, setShowDisputes] = useState(false)
+
 
   useEffect(() => {
     fetchData()
@@ -46,9 +56,10 @@ export default function MentorSchedulePage() {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const [bookingsRes, slotsRes] = await Promise.all([
+      const [bookingsRes, slotsRes, disputesRes] = await Promise.all([
         scheduleService.getMyBookings(page, size, statusFilter),
-        scheduleService.getMyTimeSlots()
+        scheduleService.getMyTimeSlots(),
+        disputeService.getMentorDisputes({ page: 0, size: 50 })
       ])
       
       if (bookingsRes.code === 1000) {
@@ -56,10 +67,41 @@ export default function MentorSchedulePage() {
         setTotalPages(bookingsRes.result.totalPages)
       }
       if (slotsRes.code === 1000) setTimeSlots(slotsRes.result)
+      if (disputesRes.code === 1000) setMentorDisputes(disputesRes.result.content || [])
     } catch (error) {
       console.error("Failed to fetch schedule data", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const openDisputeModal = (booking) => {
+    setDisputeBooking(booking)
+    setDisputeReason("")
+    setDisputeError("")
+    setDisputeModalOpen(true)
+  }
+
+  const handleSubmitDispute = async (e) => {
+    e.preventDefault()
+    if (!disputeReason.trim()) {
+      setDisputeError("Vui lòng nhập lý do khiếu nại")
+      return
+    }
+    setDisputeSubmitting(true)
+    setDisputeError("")
+    try {
+      const res = await disputeService.createDispute({ bookingId: disputeBooking.id, reason: disputeReason })
+      if (res.code === 1000) {
+        setDisputeModalOpen(false)
+        fetchData()
+      } else {
+        setDisputeError(res.message || "Có lỗi xảy ra")
+      }
+    } catch (err) {
+      setDisputeError(err.response?.data?.message || "Lỗi kết nối Server")
+    } finally {
+      setDisputeSubmitting(false)
     }
   }
 
@@ -177,6 +219,8 @@ export default function MentorSchedulePage() {
       case 'COMPLETED': return { text: "Đã hoàn thành", color: "bg-green-100 text-green-700" }
       case 'REJECTED': return { text: "Đã từ chối", color: "bg-red-100 text-red-700" }
       case 'CANCELLED': return { text: "Đã hủy", color: "bg-slate-100 text-slate-600" }
+      case 'DISPUTED': return { text: "Đang khiếu nại", color: "bg-orange-100 text-orange-700" }
+      case 'REFUNDED': return { text: "Đã hoàn tiền", color: "bg-rose-100 text-rose-700" }
       default: return { text: status, color: "bg-slate-100 text-slate-600" }
     }
   }
@@ -232,14 +276,27 @@ export default function MentorSchedulePage() {
           <div>
              <h1 className="text-2xl font-bold text-slate-900">Lịch dạy của tôi</h1>
              <p className="text-slate-500 text-sm mt-1">Quản lý thời gian và các ca học sắp tới của bạn.</p>
+           </div>
+          <div className="flex items-center gap-3">
+            <button 
+               onClick={() => setShowDisputes(true)}
+               className="flex items-center gap-2 bg-white border border-orange-200 text-orange-600 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-orange-50 transition-colors relative">
+              <MessageSquare className="w-4 h-4" />
+              Khiếu nại
+              {mentorDisputes.filter(d => d.status === 'PENDING').length > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                  {mentorDisputes.filter(d => d.status === 'PENDING').length}
+                </span>
+              )}
+            </button>
+            <button 
+               onClick={() => setIsModalOpen(true)}
+               className="flex items-center gap-2 bg-[#372660] hover:bg-[#2b1d4c] text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm">
+              <Calendar className="w-4 h-4" />
+              Cập nhật khung giờ rảnh
+            </button>
           </div>
-          <button 
-             onClick={() => setIsModalOpen(true)}
-             className="flex items-center gap-2 bg-[#372660] hover:bg-[#2b1d4c] text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm">
-            <Calendar className="w-4 h-4" />
-            Cập nhật khung giờ rảnh
-          </button>
-        </div>
+         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
           
@@ -378,7 +435,7 @@ export default function MentorSchedulePage() {
 
              {/* Status Filter */}
              <div className="flex flex-nowrap overflow-x-auto gap-2 mb-4 pb-1 scrollbar-hide">
-               {['ALL', 'PENDING', 'PAID', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'REJECTED'].map(st => (
+               {['ALL', 'PENDING', 'PAID', 'CONFIRMED', 'COMPLETED', 'DISPUTED', 'REFUNDED', 'CANCELLED', 'REJECTED'].map(st => (
                  <button 
                    key={st}
                    onClick={() => handleStatusChange(st)}
@@ -479,11 +536,29 @@ export default function MentorSchedulePage() {
                               )}
                             </>
                          )}
+                         {(cls.status === 'COMPLETED' || cls.status === 'PAID' || cls.status === 'CONFIRMED') && (
+                             <button
+                               onClick={() => openDisputeModal(cls)}
+                               className="px-4 py-2 border border-orange-200 text-orange-600 rounded-lg text-sm font-bold hover:bg-orange-50 transition-colors flex items-center gap-2"
+                             >
+                               <AlertTriangle className="w-4 h-4" /> Khiếu nại
+                             </button>
+                          )}
                          {cls.status === 'COMPLETED' && (
                             <div className="text-xs font-semibold text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded bg-emerald-50">
                                Ca học đã hoàn thành
                             </div>
                          )}
+                         {cls.status === 'DISPUTED' && (
+                             <div className="text-xs font-semibold text-orange-600 border border-orange-200 px-3 py-1.5 rounded bg-orange-50">
+                                Đang chờ xử lý khiếu nại
+                             </div>
+                          )}
+                          {cls.status === 'REFUNDED' && (
+                             <div className="text-xs font-semibold text-rose-600 border border-rose-200 px-3 py-1.5 rounded bg-rose-50">
+                                Đã hoàn tiền
+                             </div>
+                          )}
                          {cls.status === 'REJECTED' && (
                             <div className="text-xs font-semibold text-red-600 border border-red-200 px-3 py-1.5 rounded bg-red-50">
                                Đã được từ chối
@@ -645,6 +720,101 @@ export default function MentorSchedulePage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* CREATE DISPUTE MODAL */}
+      {disputeModalOpen && disputeBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-orange-50">
+              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-orange-500" /> Tạo đơn khiếu nại
+              </h3>
+              <button onClick={() => setDisputeModalOpen(false)} className="text-slate-400 hover:text-slate-600 bg-white p-1 rounded-md shadow-sm border border-slate-100">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmitDispute} className="p-6 space-y-4">
+              {disputeError && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100 font-medium">{disputeError}</div>
+              )}
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                <p className="text-xs text-slate-500 mb-1">Ca học</p>
+                <p className="text-sm font-bold text-slate-800">{disputeBooking.menteeName || `Học viên #${disputeBooking.menteeId}`}</p>
+                <p className="text-xs text-slate-500 mt-1">{formatDate(disputeBooking.startTime)} • {formatTime(disputeBooking.startTime)} - {formatTime(disputeBooking.endTime)}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Lý do khiếu nại <span className="text-red-500">*</span></label>
+                <textarea
+                  value={disputeReason}
+                  onChange={(e) => setDisputeReason(e.target.value)}
+                  rows={4}
+                  placeholder="Mô tả chi tiết lý do khiếu nại..."
+                  className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-sm resize-none"
+                  required
+                />
+              </div>
+              <div className="pt-2 flex gap-3">
+                <button type="button" onClick={() => setDisputeModalOpen(false)}
+                  className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-50 transition-colors">
+                  Hủy
+                </button>
+                <button type="submit" disabled={disputeSubmitting}
+                  className="flex-1 px-4 py-2.5 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600 shadow-md transition-colors disabled:opacity-50">
+                  {disputeSubmitting ? "Đang gửi..." : "Gửi khiếu nại"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* INCOMING DISPUTES PANEL */}
+      {showDisputes && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[80vh] flex flex-col">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-orange-500" /> Đơn khiếu nại từ học viên
+              </h3>
+              <button onClick={() => setShowDisputes(false)} className="text-slate-400 hover:text-slate-600 bg-white p-1 rounded-md shadow-sm border border-slate-100">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-3 overflow-y-auto flex-1">
+              {mentorDisputes.length === 0 ? (
+                <p className="text-sm text-slate-500 text-center py-6">Chưa có đơn khiếu nại nào.</p>
+              ) : (
+                mentorDisputes.map(d => (
+                  <div key={d.id} className="p-4 border border-slate-100 rounded-xl bg-slate-50 space-y-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-bold text-slate-800">{d.creatorName}</p>
+                        <p className="text-xs text-slate-500">Booking #{d.bookingId} • {new Date(d.createdAt).toLocaleDateString('vi-VN')}</p>
+                      </div>
+                      <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
+                        d.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
+                        d.status === 'RESOLVED_REFUND' ? 'bg-rose-100 text-rose-700' :
+                        d.status === 'RESOLVED_NO_REFUND' ? 'bg-green-100 text-green-700' :
+                        'bg-slate-100 text-slate-600'
+                      }`}>
+                        {d.status === 'PENDING' ? 'Chờ xử lý' :
+                         d.status === 'RESOLVED_REFUND' ? 'Đã hoàn tiền' :
+                         d.status === 'RESOLVED_NO_REFUND' ? 'Từ chối hoàn tiền' : d.status}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-700 bg-white p-2 rounded-lg border border-slate-100">{d.reason}</p>
+                    {d.adminNote && (
+                      <div className="text-xs text-slate-500 bg-blue-50 p-2 rounded-lg border border-blue-100">
+                        <span className="font-bold">Admin:</span> {d.adminNote}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       )}

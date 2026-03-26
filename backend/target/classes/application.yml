@@ -13,7 +13,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -45,4 +45,5 @@ vnpay:
     tmnCode: "PIUY8BWH"
     secretKey: "LZFA9YCG9QU9LMD31GGQ98UA2JWJD0X9"
     vnp_PayUrl: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+    vnp_ApiUrl: "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction"
     returnUrl: "http://localhost:8080/api/payment/vnpay-return" 

@@ -9,7 +9,7 @@ export default function AdminSidebar() {
     { icon: LayoutDashboard, label: "Tổng quan", path: "/admin" },
     { icon: Users, label: "Duyệt Mentor", path: "/admin/mentor-requests" },
     { icon: Tag, label: "Quản lý kỹ năng", path: "/admin/skills" },
-    { icon: AlertTriangle, label: "Khiếu nại", path: "/admin/reports" },
+    { icon: AlertTriangle, label: "Khiếu nại", path: "/admin/disputes" },
     { icon: CreditCard, label: "Rút tiền", path: "/admin/withdrawals" },
   ]
 

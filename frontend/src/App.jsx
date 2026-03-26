@@ -20,6 +20,7 @@ import MentorSchedulePage from './pages/MentorSchedulePage'
 import AdminSkillPage from './pages/admin/AdminSkillPage'
 import MentorWalletPage from './pages/MentorWalletPage'
 import AdminWithdrawalPage from './pages/admin/AdminWithdrawalPage'
+import AdminDisputesPage from './pages/admin/AdminDisputesPage'
 import MenteeProfilePage from './pages/MenteeProfilePage'
 import PaymentResultPage from './pages/PaymentResultPage'
 
@@ -60,6 +61,7 @@ export default function App() {
             <Route path="mentor-requests" element={<AdminMentorRequestsPage />} />
             <Route path="skills" element={<AdminSkillPage />} />
             <Route path="withdrawals" element={<AdminWithdrawalPage />} />
+            <Route path="disputes" element={<AdminDisputesPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
