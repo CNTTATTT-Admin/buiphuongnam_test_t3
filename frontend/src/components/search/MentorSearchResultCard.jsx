@@ -32,7 +32,10 @@ export default function MentorSearchResultCard({ mentor }) {
                 <CheckCircle className="w-5 h-5 text-[#372660] fill-[#372660]/10" />
               )}
             </div>
-            <p className="text-sm font-medium text-slate-600 truncate">{mentor.role}</p>
+            <p className="text-sm font-medium text-slate-600 truncate">
+              {mentor.role}
+              {mentor.yearOfExp ? ` • ${mentor.yearOfExp} năm kinh nghiệm` : ""}
+            </p>
           </div>
           
           <div className="flex flex-col items-end shrink-0">

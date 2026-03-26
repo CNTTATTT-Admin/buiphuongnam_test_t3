@@ -17,6 +17,11 @@ const adminService = {
     } catch (error) {
       throw error.response?.data || { message: 'Network error or server unavailable' };
     }
+  },
+
+  getDashboardStats: async () => {
+    const response = await api.get('/admin/dashboard/stats');
+    return response;
   }
 };
 

@@ -19,4 +19,6 @@ public class MentorProfileResponse {
     private BigDecimal walletBalance;
     private List<String> skills;
     private List<CertificateResponseDto> certificates;
+    private Double rating;
+    private Long totalStudents;
 }

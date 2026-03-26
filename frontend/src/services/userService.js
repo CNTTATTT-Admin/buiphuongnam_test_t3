@@ -19,6 +19,10 @@ export const userService = {
   getMentors,
   getUserById,
   getMentorTimeSlots,
+  searchMentors: async (keyword) => {
+    const response = await api.get('/public/mentors/search', { params: { keyword } });
+    return response;
+  },
   getMenteeProfile: async (userId) => {
     const response = await api.get(`/users/${userId}`);
     return response;

@@ -1,25 +1,25 @@
 import React from "react"
-import { Users, CreditCard, CheckCircle } from "lucide-react"
+import { Users, AlertTriangle, CheckCircle } from "lucide-react"
 
-export default function StatCards() {
-  const stats = [
+export default function StatCards({ stats }) {
+  const statItems = [
     {
-      title: "NGƯỜI DÙNG MỚI",
-      value: "1,240",
+      title: "TỔNG NGƯỜI DÙNG",
+      value: stats?.totalUsers?.toLocaleString('vi-VN') || "0",
       icon: Users,
       bgColor: "bg-blue-100",
       iconColor: "text-blue-600"
     },
     {
-      title: "YÊU CẦU RÚT TIỀN",
-      value: "45",
-      icon: CreditCard,
+      title: "KHIẾU NẠI CHỜ XỬ LÝ",
+      value: stats?.pendingDisputes?.toLocaleString('vi-VN') || "0",
+      icon: AlertTriangle,
       bgColor: "bg-amber-100",
       iconColor: "text-amber-600"
     },
     {
       title: "BUỔI HỌC HOÀN TẤT",
-      value: "8,920",
+      value: stats?.totalCompletedBookings?.toLocaleString('vi-VN') || "0",
       icon: CheckCircle,
       bgColor: "bg-emerald-100",
       iconColor: "text-emerald-600"
@@ -28,7 +28,7 @@ export default function StatCards() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {stats.map((stat, index) => {
+      {statItems.map((stat, index) => {
         const Icon = stat.icon;
         return (
           <div key={index} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex items-center gap-5">

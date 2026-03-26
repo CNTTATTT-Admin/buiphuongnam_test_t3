@@ -1,10 +1,7 @@
 import React from "react"
-import { Search, Bell, Menu } from "lucide-react"
-import { Button } from "../ui/button"
-import { Input } from "../ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { useAuth } from "../../contexts/AuthContext"
 import NotificationDropdown from "./NotificationDropdown"
+import { Button } from "../ui/button"
 
 export default function Navbar() {
   const { user, logout } = useAuth()
@@ -24,17 +21,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Global Search */}
-        <div className="hidden flex-1 items-center max-w-2xl px-8 lg:flex">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Tìm kiếm kỹ năng, công nghệ..."
-              className="w-full rounded-md bg-slate-50 border-transparent focus-visible:ring-1 focus-visible:ring-primary pl-10 pr-4 h-10"
-            />
-          </div>
-        </div>
+        {/* Global Search is removed */}
 
         {/* Actions & Profile */}
         <div className="flex items-center justify-end gap-5 w-64 shrink-0">

@@ -116,12 +116,14 @@ vn\kurisu\mentormatch\controller\RoleController.class
 vn\kurisu\mentormatch\entity\Certificate$CertificateBuilder.class
 vn\kurisu\mentormatch\dto\response\MentorRequestResponse$MentorRequestResponseBuilder.class
 vn\kurisu\mentormatch\dto\response\WithdrawalResponse.class
+vn\kurisu\mentormatch\dto\response\AdminDashboardStats$AdminDashboardStatsBuilder.class
 vn\kurisu\mentormatch\dto\response\UserResponse.class
 vn\kurisu\mentormatch\security\SecurityConfig.class
 vn\kurisu\mentormatch\dto\response\VNPayPaymentResponse.class
 vn\kurisu\mentormatch\dto\response\MentorRequestResponse.class
 vn\kurisu\mentormatch\dto\response\CommentResponse$CommentResponseBuilder.class
 vn\kurisu\mentormatch\repository\PaymentRepository.class
+vn\kurisu\mentormatch\controller\AdminDashboardController.class
 vn\kurisu\mentormatch\dto\request\MeetingLinkRequest$MeetingLinkRequestBuilder.class
 vn\kurisu\mentormatch\entity\Notification$NotificationBuilder.class
 vn\kurisu\mentormatch\security\CustomUserDetailsService.class
@@ -135,6 +137,7 @@ vn\kurisu\mentormatch\entity\PaymentStatus.class
 vn\kurisu\mentormatch\service\impl\UserServiceImpl.class
 vn\kurisu\mentormatch\dto\response\WithdrawalResponse$WithdrawalResponseBuilder.class
 vn\kurisu\mentormatch\security\CloudinaryConfig.class
+vn\kurisu\mentormatch\dto\response\AdminDashboardStats$MonthlyRevenue$MonthlyRevenueBuilder.class
 vn\kurisu\mentormatch\dto\request\ResolveDisputeRequest.class
 vn\kurisu\mentormatch\controller\UploadController.class
 vn\kurisu\mentormatch\controller\WalletController.class
@@ -155,6 +158,7 @@ vn\kurisu\mentormatch\entity\PostImage$PostImageBuilder.class
 vn\kurisu\mentormatch\dto\request\LoginRequest.class
 vn\kurisu\mentormatch\dto\request\WithdrawalRequestDto.class
 vn\kurisu\mentormatch\dto\response\DisputeResponse.class
+vn\kurisu\mentormatch\dto\response\AdminDashboardStats.class
 vn\kurisu\mentormatch\dto\response\NotificationResponse.class
 vn\kurisu\mentormatch\service\PostService.class
 vn\kurisu\mentormatch\dto\request\NotificationEventDto$NotificationEventDtoBuilder.class
@@ -163,6 +167,7 @@ vn\kurisu\mentormatch\entity\BookingStatus.class
 vn\kurisu\mentormatch\dto\response\MenteeProfileResponse$MenteeProfileResponseBuilder.class
 vn\kurisu\mentormatch\entity\Certificate.class
 vn\kurisu\mentormatch\dto\response\CommentResponse.class
+vn\kurisu\mentormatch\service\impl\DisputeServiceImpl.class
 vn\kurisu\mentormatch\dto\response\ReviewResponse.class
 vn\kurisu\mentormatch\dto\request\MentorProfileRequest$MentorProfileRequestBuilder.class
 vn\kurisu\mentormatch\dto\response\AuthResponse.class
@@ -183,6 +188,7 @@ vn\kurisu\mentormatch\service\BookingService.class
 vn\kurisu\mentormatch\controller\ProfileController.class
 vn\kurisu\mentormatch\security\JwtTokenProvider.class
 vn\kurisu\mentormatch\repository\CertificateRepository.class
+vn\kurisu\mentormatch\dto\response\AdminDashboardStats$MonthlyRevenue.class
 vn\kurisu\mentormatch\service\impl\RabbitMQProducer.class
 vn\kurisu\mentormatch\repository\WithdrawalRequestRepository.class
 vn\kurisu\mentormatch\dto\request\LoginRequest$LoginRequestBuilder.class
