@@ -7,6 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 import vn.kurisu.mentormatch.dto.request.CreateDisputeRequest;
+import vn.kurisu.mentormatch.dto.request.CounterDisputeRequest;
 import vn.kurisu.mentormatch.dto.response.ApiResponse;
 import vn.kurisu.mentormatch.dto.response.DisputeResponse;
 import vn.kurisu.mentormatch.service.DisputeService;
@@ -21,6 +22,16 @@ public class DisputeController {
     @PostMapping
     public ApiResponse<DisputeResponse> createDispute(@RequestBody @Valid CreateDisputeRequest request) {
         return disputeService.createDispute(request);
+    }
+
+    @PostMapping("/{id}/counter")
+    public ApiResponse<DisputeResponse> counterDispute(@PathVariable Integer id, @RequestBody @Valid CounterDisputeRequest request) {
+        return disputeService.counterDispute(id, request);
+    }
+
+    @GetMapping("/booking/{bookingId}")
+    public ApiResponse<DisputeResponse> getDisputeByBooking(@PathVariable Integer bookingId) {
+        return disputeService.getDisputeByBooking(bookingId);
     }
 
     @GetMapping("/my-disputes")

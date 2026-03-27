@@ -15,6 +15,7 @@ public class PostResponse {
     private Integer userId;
     private String authorName;
     private String authorAvatarUrl;
+    private String authorRole;
     private String content;
     private List<String> imageUrls;
     private LocalDateTime createdAt;

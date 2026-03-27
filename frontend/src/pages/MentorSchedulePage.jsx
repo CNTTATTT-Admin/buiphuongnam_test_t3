@@ -43,6 +43,13 @@ export default function MentorSchedulePage() {
   const [mentorDisputes, setMentorDisputes] = useState([])
   const [showDisputes, setShowDisputes] = useState(false)
 
+  // Counter Dispute state
+  const [counterModalOpen, setCounterModalOpen] = useState(false)
+  const [counterDisputeData, setCounterDisputeData] = useState(null)
+  const [counterReasonText, setCounterReasonText] = useState("")
+  const [counterError, setCounterError] = useState("")
+  const [counterSubmitting, setCounterSubmitting] = useState(false)
+
 
   useEffect(() => {
     fetchData()
@@ -102,6 +109,36 @@ export default function MentorSchedulePage() {
       setDisputeError(err.response?.data?.message || "Lỗi kết nối Server")
     } finally {
       setDisputeSubmitting(false)
+    }
+  }
+
+  const openCounterModal = (dispute) => {
+    setCounterDisputeData(dispute)
+    setCounterReasonText("")
+    setCounterError("")
+    setCounterModalOpen(true)
+  }
+
+  const handleCounterDispute = async (e) => {
+    e.preventDefault()
+    if (!counterReasonText.trim()) {
+      setCounterError("Vui lòng nhập lý do kháng cáo")
+      return
+    }
+    setCounterSubmitting(true)
+    setCounterError("")
+    try {
+      const res = await disputeService.counterDispute(counterDisputeData.id, { counterReason: counterReasonText })
+      if (res.code === 1000) {
+        setCounterModalOpen(false)
+        fetchData()
+      } else {
+        setCounterError(res.message || "Có lỗi xảy ra")
+      }
+    } catch (err) {
+      setCounterError(err.response?.data?.message || "Lỗi kết nối Server")
+    } finally {
+      setCounterSubmitting(false)
     }
   }
 
@@ -796,16 +833,37 @@ export default function MentorSchedulePage() {
                       </div>
                       <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
                         d.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
+                        d.status === 'APPEALED' ? 'bg-blue-100 text-blue-700' :
                         d.status === 'RESOLVED_REFUND' ? 'bg-rose-100 text-rose-700' :
                         d.status === 'RESOLVED_NO_REFUND' ? 'bg-green-100 text-green-700' :
                         'bg-slate-100 text-slate-600'
                       }`}>
                         {d.status === 'PENDING' ? 'Chờ xử lý' :
+                         d.status === 'APPEALED' ? 'Đã kháng đơn' :
                          d.status === 'RESOLVED_REFUND' ? 'Đã hoàn tiền' :
                          d.status === 'RESOLVED_NO_REFUND' ? 'Từ chối hoàn tiền' : d.status}
                       </span>
                     </div>
-                    <p className="text-sm text-slate-700 bg-white p-2 rounded-lg border border-slate-100">{d.reason}</p>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-600 mb-1">Lý do khiếu nại:</p>
+                      <p className="text-sm text-slate-700 bg-white p-2 rounded-lg border border-slate-100">{d.reason}</p>
+                    </div>
+                    {d.counterReason ? (
+                      <div className="mt-2">
+                        <p className="text-xs font-semibold text-slate-600 mb-1">Lý do kháng cáo của bạn:</p>
+                        <p className="text-sm text-slate-700 bg-blue-50/50 p-2 rounded-lg border border-blue-100">{d.counterReason}</p>
+                      </div>
+                    ) : (
+                      d.status === 'PENDING' && (
+                        <div className="mt-2 flex justify-end">
+                          <button 
+                            onClick={() => openCounterModal(d)}
+                            className="text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-lg transition-colors">
+                            Gửi kháng cáo
+                          </button>
+                        </div>
+                      )
+                    )}
                     {d.adminNote && (
                       <div className="text-xs text-slate-500 bg-blue-50 p-2 rounded-lg border border-blue-100">
                         <span className="font-bold">Admin:</span> {d.adminNote}
@@ -815,6 +873,52 @@ export default function MentorSchedulePage() {
                 ))
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* COUNTER DISPUTE MODAL */}
+      {counterModalOpen && counterDisputeData && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-blue-50">
+              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-blue-500" /> Kháng cáo quyết định
+              </h3>
+              <button onClick={() => setCounterModalOpen(false)} className="text-slate-400 hover:text-slate-600 bg-white p-1 rounded-md shadow-sm border border-slate-100">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleCounterDispute} className="p-6 space-y-4">
+              {counterError && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100 font-medium">{counterError}</div>
+              )}
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                <p className="text-xs text-slate-500 mb-1">Lý do khiếu nại của học viên:</p>
+                <p className="text-sm italic text-slate-700">"{counterDisputeData.reason}"</p>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Lý do kháng cáo của bạn <span className="text-red-500">*</span></label>
+                <textarea
+                  value={counterReasonText}
+                  onChange={(e) => setCounterReasonText(e.target.value)}
+                  rows={4}
+                  placeholder="Mô tả sự việc từ góc nhìn của bạn để Admin xử lý công bằng..."
+                  className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none text-sm resize-none"
+                  required
+                />
+              </div>
+              <div className="pt-2 flex gap-3">
+                <button type="button" onClick={() => setCounterModalOpen(false)}
+                  className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-50 transition-colors">
+                  Hủy
+                </button>
+                <button type="submit" disabled={counterSubmitting}
+                  className="flex-1 px-4 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-md transition-colors disabled:opacity-50">
+                  {counterSubmitting ? "Đang gửi..." : "Gửi kháng đơn"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

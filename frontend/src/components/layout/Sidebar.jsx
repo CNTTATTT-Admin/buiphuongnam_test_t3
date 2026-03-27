@@ -5,26 +5,7 @@ import profileService from "../../services/profileService"
 
 export default function Sidebar() {
   const { user } = useAuth()
-  const [isMentor, setIsMentor] = useState(user?.role === "mentor")
-
-  useEffect(() => {
-    // If the frontend login dummy didn't catch the role accurately, try fetching from backend
-    const checkRole = async () => {
-      try {
-        const response = await profileService.getProfile()
-        if (response.code === 1000 && response.result.roles) {
-          const hasMentorRole = response.result.roles.includes("ROLE_MENTOR")
-          setIsMentor(hasMentorRole)
-        }
-      } catch (error) {
-        console.error("Failed to check roles in Sidebar", error)
-      }
-    }
-
-    if (user && user.role !== "mentor") {
-        checkRole()
-    }
-  }, [user])
+  const isMentor = user?.role === "mentor" || user?.role === "admin";
 
   const menuItems = [
     { icon: Home, label: "Bảng tin", active: window.location.pathname === '/' || window.location.pathname === '', href: '/' },
@@ -51,7 +32,7 @@ export default function Sidebar() {
               className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                 item.active 
                   ? "bg-[#372660] text-white shadow-sm" 
-                  : "text-slate-600 hover:bg-slate-100 hover:text-[#372660]"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#372660] dark:hover:text-purple-400"
               }`}
             >
               <Icon className="h-5 w-5" />

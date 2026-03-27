@@ -1,8 +1,10 @@
-import React from "react"
-import { MapPin, Briefcase, Share2, Bookmark, Star, CheckCircle } from "lucide-react"
+import React, { useState } from "react"
+import { MapPin, Briefcase, Share2, Bookmark, Star, CheckCircle, X } from "lucide-react"
 import { Button } from "../ui/button"
 
 export default function MentorHeader({ user, loading }) {
+  const [lightboxImage, setLightboxImage] = useState(null)
+
   if (loading || !user) {
      return <div className="h-48 bg-slate-100 animate-pulse rounded-xl mb-6"></div>
   }
@@ -27,7 +29,8 @@ export default function MentorHeader({ user, loading }) {
           <img 
             src={avatar} 
             alt={name} 
-            className="w-24 h-24 rounded-xl object-cover" 
+            onClick={() => setLightboxImage(avatar)}
+            className="w-24 h-24 rounded-xl object-cover cursor-zoom-in hover:opacity-95 transition-opacity" 
           />
         </div>
 
@@ -64,11 +67,35 @@ export default function MentorHeader({ user, loading }) {
             )}
             <div className="flex items-center gap-1.5 text-slate-700">
               <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-              5.0 <span className="text-slate-500 font-normal">(0 đánh giá)</span>
+              {user.mentorProfile?.rating ? user.mentorProfile.rating.toFixed(1) : "0.0"} <span className="text-slate-500 font-normal">({user.mentorProfile?.reviewCount || 0} đánh giá)</span>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Image Lightbox Overlay */}
+      {lightboxImage && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button 
+            className="absolute top-4 right-4 text-white hover:text-gray-300 p-2 bg-black/50 rounded-full transition-colors z-10"
+            onClick={(e) => {
+               e.stopPropagation();
+               setLightboxImage(null);
+            }}
+          >
+            <X className="w-8 h-8" />
+          </button>
+          <img 
+            src={lightboxImage} 
+            alt="Phóng to" 
+            className="max-w-full max-h-full object-contain cursor-zoom-out shadow-2xl"
+            onClick={(e) => e.stopPropagation()} 
+          />
+        </div>
+      )}
     </div>
   )
 }

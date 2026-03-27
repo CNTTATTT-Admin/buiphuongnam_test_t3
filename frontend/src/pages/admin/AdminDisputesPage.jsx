@@ -44,6 +44,7 @@ export default function AdminDisputesPage() {
 
   const statusConfig = {
     PENDING: { label: 'Chờ xử lý', color: 'bg-amber-50 text-amber-700 border-amber-200', icon: AlertTriangle },
+    APPEALED: { label: 'Đã kháng cáo', color: 'bg-blue-50 text-blue-700 border-blue-200', icon: AlertTriangle },
     RESOLVED_REFUND: { label: 'Đã hoàn tiền', color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle },
     RESOLVED_NO_REFUND: { label: 'Từ chối hoàn tiền', color: 'bg-slate-50 text-slate-700 border-slate-200', icon: XCircle },
     REJECTED: { label: 'Đã hủy', color: 'bg-red-50 text-red-700 border-red-200', icon: XCircle },
@@ -75,7 +76,7 @@ export default function AdminDisputesPage() {
             <Input placeholder="Tìm theo tên hoặc lý do..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9 bg-white" />
           </div>
           <div className="flex gap-2 flex-wrap">
-            {['ALL', 'PENDING', 'RESOLVED_REFUND', 'RESOLVED_NO_REFUND'].map(s => (
+            {['ALL', 'PENDING', 'APPEALED', 'RESOLVED_REFUND', 'RESOLVED_NO_REFUND'].map(s => (
               <button key={s} onClick={() => setFilter(s)} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${filter === s ? 'bg-[#372660] text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}>
                 {s === 'ALL' ? 'Tất cả' : statusConfig[s].label}
               </button>
@@ -118,7 +119,7 @@ export default function AdminDisputesPage() {
                         </td>
                         <td className="px-5 py-4 text-xs text-slate-500">{new Date(d.createdAt).toLocaleDateString('vi-VN')}</td>
                         <td className="px-5 py-4 text-right">
-                          {d.status === 'PENDING' ? (
+                          {d.status === 'PENDING' || d.status === 'APPEALED' ? (
                             <button onClick={() => setResolvingId(resolvingId === d.id ? null : d.id)} className="px-3 py-1.5 bg-[#372660] text-white text-xs font-bold rounded-lg hover:bg-opacity-90 transition-colors">
                               Xử lý
                             </button>
@@ -129,14 +130,32 @@ export default function AdminDisputesPage() {
                       </tr>
                       {resolvingId === d.id && (
                         <tr>
-                          <td colSpan="6" className="px-5 py-4 bg-slate-50/80 border-t border-slate-100">
-                            <div className="flex flex-col gap-3">
-                              <p className="text-sm"><strong>Lý do chi tiết:</strong> {d.reason}</p>
-                              <div className="flex items-center gap-3">
-                                <Input placeholder="Nhập nhận xét của Admin bắt buộc..." value={adminNote} onChange={(e) => setAdminNote(e.target.value)} className="bg-white flex-1 max-w-md" />
-                                <button onClick={() => handleResolve(d.id, true)} className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition-colors">Đồng ý Hoàn Tiền</button>
-                                <button onClick={() => handleResolve(d.id, false)} className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors">Từ chối Không Hoàn Tiền</button>
-                                <button onClick={() => { setResolvingId(null); setAdminNote(''); }} className="text-slate-500 hover:text-slate-700"><X className="w-4 h-4" /></button>
+                          <td colSpan="6" className="px-5 py-4 bg-slate-50 border-y border-slate-200 shadow-inner">
+                            <div className="flex flex-col gap-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="bg-white p-4 rounded-xl border border-orange-100 shadow-sm">
+                                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Người khiếu nại: <span className="text-orange-600">{d.creatorName}</span></p>
+                                  <p className="text-sm font-medium text-slate-700">{d.reason}</p>
+                                </div>
+                                <div className={`p-4 rounded-xl border shadow-sm ${d.counterReason ? 'bg-white border-blue-100' : 'bg-slate-50 border-slate-100 border-dashed'}`}>
+                                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                                    Giải trình đối chất: 
+                                    {d.counterCreatorName ? <span className="text-blue-600 ml-1">{d.counterCreatorName}</span> : <span className="text-slate-500 ml-1">(Chưa có)</span>}
+                                  </p>
+                                  {d.counterReason ? (
+                                    <p className="text-sm font-medium text-slate-700">{d.counterReason}</p>
+                                  ) : (
+                                    <p className="text-sm italic text-slate-400">Bên kia chưa cung cấp lý do kháng cáo hoặc đã bỏ qua.</p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3 mt-2 bg-white p-3 rounded-xl border border-slate-200">
+                                <div className="flex-1">
+                                  <Input placeholder="Nhập nhận xét / quyết định của Admin (Bắt buộc)..." value={adminNote} onChange={(e) => setAdminNote(e.target.value)} className="w-full bg-slate-50" />
+                                </div>
+                                <button onClick={() => handleResolve(d.id, true)} className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">Hoàn Tiền</button>
+                                <button onClick={() => handleResolve(d.id, false)} className="px-5 py-2.5 bg-rose-600 text-white text-sm font-bold rounded-lg hover:bg-rose-700 transition-colors shadow-sm">Không Hoàn Tiền</button>
+                                <button onClick={() => { setResolvingId(null); setAdminNote(''); }} className="p-2.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"><X className="w-5 h-5" /></button>
                               </div>
                             </div>
                           </td>

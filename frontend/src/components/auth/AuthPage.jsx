@@ -29,7 +29,7 @@ export default function AuthPage() {
           if (userName.toLowerCase().includes('admin')) {
              window.location.href = '/admin'; 
           } else {
-             navigate('/')
+             navigate('/feed')
           }
         } else {
           setError(result.message)

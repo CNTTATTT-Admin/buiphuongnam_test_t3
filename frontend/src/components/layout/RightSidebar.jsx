@@ -34,13 +34,13 @@ export default function RightSidebar() {
   return (
     <div className="w-80 shrink-0 hidden lg:block space-y-6 sticky top-24">
       {/* Following List */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-5">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+          <h3 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
             <UserCheck className="w-4 h-4 text-[#372660]" />
             Đang theo dõi
           </h3>
-          <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+          <span className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-400 px-2 py-0.5 rounded-full">
             {following.length}
           </span>
         </div>
@@ -59,7 +59,7 @@ export default function RightSidebar() {
                   className="w-10 h-10 rounded-full object-cover" 
                 />
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-semibold text-slate-900 truncate">
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
                     {user.fullName || user.userName}
                   </h4>
                   <p className="text-xs text-slate-500 truncate">
@@ -73,14 +73,14 @@ export default function RightSidebar() {
       </div>
 
       {/* Suggested Topics */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
-        <h3 className="font-bold text-slate-800 mb-4">Chủ đề quan tâm</h3>
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-5">
+        <h3 className="font-bold text-slate-800 dark:text-slate-200 mb-4">Chủ đề quan tâm</h3>
         <div className="flex flex-wrap gap-2">
           {MOCK_TAGS.map((tag) => (
             <a 
               key={tag} 
               href="#" 
-              className="text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-md hover:bg-slate-100 transition-colors"
+              className="text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
             >
               {tag}
             </a>

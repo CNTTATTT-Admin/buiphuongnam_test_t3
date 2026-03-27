@@ -23,11 +23,22 @@ import AdminWithdrawalPage from './pages/admin/AdminWithdrawalPage'
 import AdminDisputesPage from './pages/admin/AdminDisputesPage'
 import MenteeProfilePage from './pages/MenteeProfilePage'
 import PaymentResultPage from './pages/PaymentResultPage'
+import LandingPage from './pages/LandingPage'
+import { useAuth } from './contexts/AuthContext'
+
+// Root component to redirect authenticated users
+function RootRedirector() {
+  const { user } = useAuth()
+  if (user) {
+    return <Navigate to="/feed" replace />
+  }
+  return <LandingPage />
+}
 
 // User App Layout (with top Navbar)
 function UserLayout({ children }) {
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-slate-50">
+    <div className="min-h-screen flex flex-col font-sans bg-slate-50 dark:bg-slate-950 transition-colors">
       <Navbar />
       <main className="flex-1">
         {children}
@@ -42,7 +53,8 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           {/* User Routes */}
-          <Route path="/" element={<UserLayout><div className="container mx-auto px-4 py-8"><FeedPage /></div></UserLayout>} />
+          <Route path="/" element={<RootRedirector />} />
+          <Route path="/feed" element={<UserLayout><div className="container mx-auto px-4 py-8"><FeedPage /></div></UserLayout>} />
           <Route path="/auth" element={<UserLayout><AuthPage /></UserLayout>} />
           <Route path="/login" element={<UserLayout><AuthPage /></UserLayout>} />
           <Route path="/search" element={<UserLayout><FindMentorPage /></UserLayout>} />

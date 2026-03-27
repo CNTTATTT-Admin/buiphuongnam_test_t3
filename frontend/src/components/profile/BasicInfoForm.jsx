@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { useAuth } from "../../contexts/AuthContext"
 import { Camera, CheckCircle } from "lucide-react"
 import { Input } from "../ui/input"
 import profileService from "../../services/profileService"
 
 export default function BasicInfoForm({ profile, onUpdate }) {
-  const { user } = useAuth()
+  const { user, updateAuthUser } = useAuth()
+  const fileInputRef = useRef(null)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
-    avatar: ""
+    avatar: "",
+    avatarFile: null
   })
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState(null)
@@ -30,16 +32,45 @@ export default function BasicInfoForm({ profile, onUpdate }) {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
+  const handleAvatarChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      setFormData({
+        ...formData,
+        avatar: URL.createObjectURL(file), // Local preview url
+        avatarFile: file // Actual File object
+      })
+    }
+  }
+
   const handleSave = async (e) => {
     e.preventDefault()
     setIsSaving(true)
     setMessage(null)
 
     try {
+      let currentAvatarUrl = formData.avatar
+
+      // Upload avatar if a new file was selected
+      if (formData.avatarFile) {
+        const avatarRes = await profileService.updateAvatar(formData.avatarFile)
+        if (avatarRes.code === 1000) {
+          currentAvatarUrl = avatarRes.result // The new cloud URL
+          // Update the global context so Navbar avatar changes instantly
+          if (updateAuthUser) {
+             updateAuthUser({ avatar: currentAvatarUrl })
+          }
+        } else {
+           setMessage({ type: 'error', text: avatarRes.message || 'Tải ảnh lên thất bại' })
+           setIsSaving(false)
+           return
+        }
+      }
+
       const result = await profileService.updateBasicProfile({
         fullName: formData.name,
         phone: formData.phone,
-        avatarUrl: formData.avatar
+        avatarUrl: currentAvatarUrl
       })
       if (result.code === 1000) {
         setMessage({ type: 'success', text: 'Cập nhật thông tin cơ bản thành công!' })
@@ -71,7 +102,7 @@ export default function BasicInfoForm({ profile, onUpdate }) {
 
       <div className="flex flex-col md:flex-row gap-8 items-start mb-8">
         <div className="shrink-0 flex flex-col items-center gap-3">
-          <div className="relative group cursor-pointer">
+          <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
             <img 
               src={formData.avatar} 
               alt="Avatar" 
@@ -80,8 +111,15 @@ export default function BasicInfoForm({ profile, onUpdate }) {
             <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               <Camera className="w-6 h-6 text-white" />
             </div>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              hidden 
+              accept="image/*" 
+              onChange={handleAvatarChange} 
+            />
           </div>
-          <span className="text-xs font-semibold text-[#372660] cursor-pointer hover:underline">Thay đổi ảnh</span>
+          <span onClick={() => fileInputRef.current?.click()} className="text-xs font-semibold text-[#372660] cursor-pointer hover:underline">Thay đổi ảnh</span>
         </div>
 
         <form onSubmit={handleSave} className="flex-1 w-full space-y-5">

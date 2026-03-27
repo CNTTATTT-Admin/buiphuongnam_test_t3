@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Clock, Calendar, Video, CheckCircle, Clock3, Star, AlertTriangle, X, Send, ChevronLeft, ChevronRight } from 'lucide-react';
 import { bookingService } from '../services/bookingService';
 import { disputeService } from '../services/disputeService';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function MenteeBookingsPage() {
   const [bookings, setBookings] = useState([]);
@@ -24,6 +25,13 @@ export default function MenteeBookingsPage() {
 
   // Track which bookings have been reviewed
   const [reviewedBookings, setReviewedBookings] = useState(new Set());
+
+  // View Dispute & Counter modal state
+  const { user } = useAuth();
+  const [viewDisputeModal, setViewDisputeModal] = useState(null); // DisputeData
+  const [disputeDetailsLoading, setDisputeDetailsLoading] = useState(false);
+  const [counterReasonText, setCounterReasonText] = useState("");
+  const [counterSubmitting, setCounterSubmitting] = useState(false);
 
   useEffect(() => {
     fetchBookings();
@@ -145,6 +153,50 @@ export default function MenteeBookingsPage() {
       setMessage({ type: 'error', text: err.response?.data?.message || 'Có lỗi xảy ra khi gửi khiếu nại' });
     } finally {
       setSubmittingDispute(false);
+    }
+  };
+
+  const handleViewDispute = async (bookingId) => {
+    try {
+      setDisputeDetailsLoading(true);
+      // Just set an empty object to open modal displaying skeleton
+      setViewDisputeModal({ isLoading: true });
+      const res = await disputeService.getDisputeByBooking(bookingId);
+      if (res.code === 1000) {
+        setViewDisputeModal(res.result);
+        setCounterReasonText("");
+      } else {
+        setMessage({ type: 'error', text: res.message || "Lỗi tải khiếu nại" });
+        setViewDisputeModal(null);
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.message || "Không thể tải chi tiết khiếu nại" });
+      setViewDisputeModal(null);
+    } finally {
+      setDisputeDetailsLoading(false);
+    }
+  };
+
+  const handleCounterSubmit = async (e) => {
+    e.preventDefault();
+    if (!counterReasonText.trim()) {
+      setMessage({ type: 'error', text: 'Vui lòng nhập lý do kháng cáo' });
+      return;
+    }
+    try {
+      setCounterSubmitting(true);
+      const res = await disputeService.counterDispute(viewDisputeModal.id, { counterReason: counterReasonText });
+      if (res.code === 1000) {
+        setMessage({ type: 'success', text: 'Đã gửi kháng cáo thành công!' });
+        setViewDisputeModal(res.result); // Update modal data with new counter reason
+        fetchBookings();
+      } else {
+        setMessage({ type: 'error', text: res.message || "Lỗi gửi kháng cáo" });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.message || "Không thể gửi kháng cáo" });
+    } finally {
+      setCounterSubmitting(false);
     }
   };
 
@@ -409,17 +461,49 @@ export default function MenteeBookingsPage() {
 
                       {/* DISPUTED → show pending info */}
                       {booking.status === 'DISPUTED' && (
-                        <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-600 rounded-lg text-sm font-medium">
-                          <AlertTriangle className="w-4 h-4" />
-                          Đơn khiếu nại đang chờ Admin xử lý
+                        <div className="flex items-center gap-2">
+                          <div className="px-4 py-2 bg-orange-50 text-orange-600 rounded-lg text-sm font-medium">
+                            <AlertTriangle className="w-4 h-4 inline-block mr-1.5" />
+                            Đang xử lý khiếu nại
+                          </div>
+                          <button
+                            onClick={() => handleViewDispute(booking.id)}
+                            className="px-4 py-2 bg-white border border-orange-200 text-orange-600 hover:bg-orange-50 rounded-lg text-sm font-semibold transition-colors shadow-sm"
+                          >
+                            Xem chi tiết
+                          </button>
                         </div>
                       )}
 
                       {/* REFUNDED → show refund confirmation */}
                       {booking.status === 'REFUNDED' && (
-                        <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-medium">
-                          <CheckCircle className="w-4 h-4" />
-                          Đã hoàn tiền thành công
+                        <div className="flex items-center gap-2">
+                          <div className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-medium">
+                            <CheckCircle className="w-4 h-4 inline-block mr-1.5" />
+                            Đã hoàn tiền
+                          </div>
+                          <button
+                            onClick={() => handleViewDispute(booking.id)}
+                            className="text-emerald-600 hover:underline text-sm font-bold ml-1"
+                          >
+                            Xem lý do
+                          </button>
+                        </div>
+                      )}
+
+                      {/* REJECTED → show rejected info */}
+                      {booking.status === 'REJECTED' && (
+                        <div className="flex items-center gap-2">
+                          <div className="px-4 py-2 bg-rose-50 text-rose-600 rounded-lg text-sm font-medium">
+                            <AlertTriangle className="w-4 h-4 inline-block mr-1.5" />
+                            Từ chối hoàn tiền
+                          </div>
+                          <button
+                            onClick={() => handleViewDispute(booking.id)}
+                            className="text-rose-600 hover:underline text-sm font-bold ml-1"
+                          >
+                            Xem lý do
+                          </button>
                         </div>
                       )}
                     </div>
@@ -569,6 +653,115 @@ export default function MenteeBookingsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* View/Counter Dispute Modal */}
+      {viewDisputeModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-orange-50/50">
+              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-orange-500" />
+                Chi tiết Khiếu nại
+              </h2>
+              <button onClick={() => setViewDisputeModal(null)} className="text-slate-400 hover:text-slate-600"><X className="w-6 h-6" /></button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto">
+              {viewDisputeModal.isLoading ? (
+                <div className="flex flex-col items-center justify-center py-10 opacity-60">
+                  <div className="w-8 h-8 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mb-4" />
+                  <p className="text-sm font-medium text-slate-500">Đang tải dữ liệu khiếu nại...</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Trạng thái đơn */}
+                  <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <span className="text-sm font-semibold text-slate-600">Trạng thái:</span>
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                      viewDisputeModal.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
+                      viewDisputeModal.status === 'APPEALED' ? 'bg-blue-100 text-blue-700' :
+                      viewDisputeModal.status === 'RESOLVED_REFUND' ? 'bg-rose-100 text-rose-700' :
+                      viewDisputeModal.status === 'RESOLVED_NO_REFUND' ? 'bg-green-100 text-green-700' :
+                      'bg-slate-200 text-slate-600'
+                    }`}>
+                      {viewDisputeModal.status === 'PENDING' ? 'Mới tạo - Chờ xử lý' :
+                       viewDisputeModal.status === 'APPEALED' ? 'Đã kháng cáo - Chờ quyết định' :
+                       viewDisputeModal.status === 'RESOLVED_REFUND' ? 'Đã duyệt hoàn tiền' :
+                       viewDisputeModal.status === 'RESOLVED_NO_REFUND' ? 'Từ chối hoàn tiền' : 
+                       viewDisputeModal.status}
+                    </span>
+                  </div>
+
+                  {/* Lý do khiếu nại (băng bên nguyên) */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-bold text-slate-800 flex items-center justify-between">
+                      <span>Người tạo khiếu nại: <span className="text-[#372660]">{viewDisputeModal.creatorName}</span></span>
+                      <span className="text-xs font-medium text-slate-500">{formatDate(viewDisputeModal.createdAt)}</span>
+                    </p>
+                    <div className="p-4 bg-orange-50/50 border border-orange-100 rounded-xl text-sm text-slate-700">
+                      {viewDisputeModal.reason}
+                    </div>
+                  </div>
+
+                  {/* Lý do kháng cáo (bên bị) */}
+                  {viewDisputeModal.counterReason ? (
+                     <div className="space-y-2">
+                      <p className="text-sm font-bold text-slate-800 flex items-center justify-between">
+                        <span>Lý do đối chất (Kháng cáo): <span className="text-blue-600">{viewDisputeModal.counterCreatorName}</span></span>
+                        <span className="text-xs font-medium text-slate-500">{viewDisputeModal.respondedAt ? formatDate(viewDisputeModal.respondedAt) : ''}</span>
+                      </p>
+                      <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-xl text-sm text-slate-700">
+                        {viewDisputeModal.counterReason}
+                      </div>
+                    </div>
+                  ) : (
+                    /* Form kháng cáo dành cho bên bị */
+                    viewDisputeModal.status === 'PENDING' && user && user.id !== viewDisputeModal.creatorId && (
+                      <form onSubmit={handleCounterSubmit} className="space-y-3 pt-4 border-t border-slate-100">
+                         <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-xl text-sm mb-2">
+                           <strong>Lưu ý:</strong> Bạn có quyền đưa ra lý do phản bác lại khiếu nại trên để Admin xem xét công bằng.
+                         </div>
+                         <label className="block text-sm font-bold text-slate-700">Lý do kháng cáo của bạn <span className="text-red-500">*</span></label>
+                         <textarea
+                           rows={3}
+                           placeholder="Trình bày lý do từ góc nhìn của bạn..."
+                           value={counterReasonText}
+                           onChange={(e) => setCounterReasonText(e.target.value)}
+                           className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
+                           required
+                         />
+                         <div className="flex justify-end pt-2">
+                           <button
+                             type="submit"
+                             disabled={counterSubmitting}
+                             className="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all flex items-center gap-2 disabled:opacity-50"
+                           >
+                             <Send className="w-4 h-4" />
+                             {counterSubmitting ? 'Đang gửi...' : 'Gửi kháng cáo'}
+                           </button>
+                         </div>
+                      </form>
+                    )
+                  )}
+
+                  {/* Phán quyết của Admin */}
+                  {viewDisputeModal.adminNote && (
+                    <div className="space-y-2 pt-2">
+                      <p className="text-sm font-bold text-emerald-700 flex items-center gap-1.5">
+                        <CheckCircle className="w-4 h-4" />
+                        Phán quyết từ Quản trị viên
+                      </p>
+                      <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-sm font-medium text-emerald-800">
+                        {viewDisputeModal.adminNote}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

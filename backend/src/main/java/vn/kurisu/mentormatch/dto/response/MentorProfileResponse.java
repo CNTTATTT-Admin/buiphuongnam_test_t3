@@ -21,4 +21,5 @@ public class MentorProfileResponse {
     private List<CertificateResponseDto> certificates;
     private Double rating;
     private Long totalStudents;
+    private Integer reviewCount;
 }

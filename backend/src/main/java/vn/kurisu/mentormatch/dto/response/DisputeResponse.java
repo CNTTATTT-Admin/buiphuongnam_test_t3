@@ -15,6 +15,12 @@ public class DisputeResponse {
     private String reason;
     private String status;
     private String adminNote;
+
+    private String counterReason;
+    private Integer counterCreatorId;
+    private String counterCreatorName;
+    private LocalDateTime respondedAt;
+
     private LocalDateTime createdAt;
     private LocalDateTime resolvedAt;
 }

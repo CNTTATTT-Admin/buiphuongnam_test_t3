@@ -28,5 +28,11 @@ export const disputeService = {
     // data: { adminNote, acceptRefund: true/false }
     const response = await api.post(`/admin/disputes/${disputeId}/resolve`, data);
     return response;
+  },
+
+  counterDispute: async (disputeId, data) => {
+    // data: { counterReason }
+    const response = await api.post(`/disputes/${disputeId}/counter`, data);
+    return response;
   }
 };

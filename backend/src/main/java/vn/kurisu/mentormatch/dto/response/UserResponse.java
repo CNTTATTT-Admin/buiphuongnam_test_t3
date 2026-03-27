@@ -19,4 +19,5 @@ public class UserResponse {
     private Boolean isActive;
     private Set<RoleResponse> roles;
     private MenteeProfileResponse menteeProfile;
+    private MentorProfileResponse mentorProfile;
 }

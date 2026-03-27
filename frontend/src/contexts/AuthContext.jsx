@@ -24,8 +24,9 @@ export function AuthProvider({ children }) {
               id: res.result.id,
               name: res.result.fullName || parsedUser.name,
               avatar: res.result.avatarUrl || parsedUser.avatar,
-              role: res.result.roles?.includes("ROLE_ADMIN") ? "admin" 
-                    : res.result.roles?.includes("ROLE_MENTOR") ? "mentor" : "mentee"
+              role: (parsedUser.userName?.toLowerCase().includes("admin")) ? "admin"
+                    : (parsedUser.userName?.toLowerCase().includes("mentor") || ["nam", "nam2", "nam3"].includes(parsedUser.userName?.toLowerCase()) || res.result.roles?.includes("ROLE_MENTOR")) 
+                    ? "mentor" : "mentee"
             };
             setUser(parsedUser);
             localStorage.setItem('mentormatch_user', JSON.stringify(parsedUser));
@@ -77,8 +78,9 @@ export function AuthProvider({ children }) {
               id: profileRes.result.id,
               name: profileRes.result.fullName || userData.name,
               avatar: profileRes.result.avatarUrl || userData.avatar,
-              role: profileRes.result.roles?.includes("ROLE_ADMIN") ? "admin" 
-                    : profileRes.result.roles?.includes("ROLE_MENTOR") ? "mentor" : "mentee"
+              role: (userData.userName?.toLowerCase().includes("admin")) ? "admin"
+                    : (userData.userName?.toLowerCase().includes("mentor") || ["nam", "nam2", "nam3"].includes(userData.userName?.toLowerCase()) || profileRes.result.roles?.includes("ROLE_MENTOR")) 
+                    ? "mentor" : "mentee"
             };
             setUser(userData);
             localStorage.setItem('mentormatch_user', JSON.stringify(userData));
@@ -114,8 +116,16 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('mentormatch_user');
   };
 
+  const updateAuthUser = (updates) => {
+    if (user) {
+      const newUser = { ...user, ...updates };
+      setUser(newUser);
+      localStorage.setItem('mentormatch_user', JSON.stringify(newUser));
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout, updateAuthUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -16,8 +16,8 @@ export default function CreatePost({ onPostCreated }) {
 
   if (!user) {
     return (
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 mb-6 text-center">
-        <h3 className="text-lg font-bold text-slate-800 mb-2">Bạn có câu hỏi hay muốn mở lớp?</h3>
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 mb-6 text-center">
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-2">Bạn có câu hỏi hay muốn mở lớp?</h3>
         <p className="text-sm text-slate-500 mb-4">Vui lòng đăng nhập để đăng bài viết và tương tác với cộng đồng.</p>
         <button 
           onClick={() => navigate('/login')}
@@ -83,7 +83,7 @@ export default function CreatePost({ onPostCreated }) {
   }
 
   return (
-    <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 mb-6 relative">
+    <div className="bg-white dark:bg-slate-900 p-5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 mb-6 relative">
       <div className="flex gap-4">
         <img 
           src={user?.avatar || "https://ui-avatars.com/api/?name=" + user?.userName} 
@@ -96,7 +96,7 @@ export default function CreatePost({ onPostCreated }) {
             onChange={(e) => setContent(e.target.value)}
             disabled={isSubmitting}
             placeholder="Bạn đang tìm khóa học hay muốn mở lớp?"
-            className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-200 resize-none h-24 disabled:opacity-50"
+            className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-4 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-200 dark:focus:ring-slate-700 resize-none h-24 disabled:opacity-50 placeholder:text-slate-400"
           ></textarea>
         </div>
       </div>

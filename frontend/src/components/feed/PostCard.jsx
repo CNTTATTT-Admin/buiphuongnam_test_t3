@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { MoreHorizontal, Heart, MessageSquare, Send, Edit2, Trash2, X, UserPlus, UserCheck } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 import postInteractionService from "../../services/postInteractionService"
 import { postService } from "../../services/postService"
 import followService from "../../services/followService"
@@ -7,13 +8,23 @@ import { useAuth } from "../../contexts/AuthContext"
 
 export default function PostCard({ post, onPostUpdated, onPostDeleted }) {
   const { user } = useAuth()
+  const navigate = useNavigate()
   
   // Use backend properties or fallback to empty strings
   const authorName = post.authorName || "Người dùng ẩn danh";
+  const authorRole = post.authorRole || "MENTEE"; // Default to MENTEE if not provided
   const avatar = post.authorAvatarUrl || "https://ui-avatars.com/api/?name=" + encodeURIComponent(authorName);
   const time = new Date(post.createdAt).toLocaleDateString("vi-VN", {
     hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric"
   });
+
+  const handleProfileClick = () => {
+    if (authorRole === "MENTOR") {
+      navigate(`/mentor/${post.userId}`);
+    } else {
+      navigate(`/mentee/${post.userId}`);
+    }
+  };
 
   // Interaction States
   const [isLiked, setIsLiked] = useState(post.isLiked || false)
@@ -27,6 +38,7 @@ export default function PostCard({ post, onPostUpdated, onPostDeleted }) {
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(post.content)
   const [isFollowing, setIsFollowing] = useState(false)
+  const [lightboxImage, setLightboxImage] = useState(null)
 
   const isAuthor = user?.id === post.userId;
 
@@ -135,14 +147,24 @@ export default function PostCard({ post, onPostUpdated, onPostDeleted }) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-100 mb-6 flex flex-col overflow-hidden">
+    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 mb-6 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="p-5 pb-3 flex justify-between items-start">
         <div className="flex gap-3">
-          <img src={avatar} alt={authorName} className="w-10 h-10 rounded-full object-cover shrink-0" />
+          <img 
+            src={avatar} 
+            alt={authorName} 
+            onClick={handleProfileClick}
+            className="w-10 h-10 rounded-full object-cover shrink-0 cursor-pointer hover:ring-2 hover:ring-[#372660]/30 transition-all" 
+          />
           <div>
             <div className="flex items-center gap-2">
-              <h4 className="font-semibold text-slate-900 leading-tight">{authorName}</h4>
+              <h4 
+                onClick={handleProfileClick}
+                className="font-semibold text-slate-900 dark:text-slate-100 leading-tight cursor-pointer hover:text-[#372660] dark:hover:text-purple-400 hover:underline"
+              >
+                {authorName}
+              </h4>
               {!isAuthor && (
                 <>
                   <span className="text-slate-300 mx-1 flex-shrink-0">•</span>
@@ -179,10 +201,10 @@ export default function PostCard({ post, onPostUpdated, onPostDeleted }) {
               <MoreHorizontal className="w-5 h-5" />
             </button>
             {showMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-100 py-1 z-10">
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-100 dark:border-slate-700 py-1 z-10">
                 <button 
                   onClick={() => { setIsEditing(true); setShowMenu(false); }}
-                  className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                  className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
                 >
                   <Edit2 className="w-4 h-4" /> Chỉnh sửa
                 </button>
@@ -224,7 +246,7 @@ export default function PostCard({ post, onPostUpdated, onPostDeleted }) {
             </div>
           </div>
         ) : (
-          <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
+          <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
             {post.content}
           </p>
         )}
@@ -232,15 +254,21 @@ export default function PostCard({ post, onPostUpdated, onPostDeleted }) {
 
       {/* Images if available */}
       {post.imageUrls && post.imageUrls.length > 0 && (
-        <div className="w-full bg-slate-50 border-t border-slate-100 flex overflow-x-auto snap-x">
+        <div className="w-full bg-slate-50 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-800 flex overflow-x-auto snap-x">
           {post.imageUrls.map((url, idx) => (
-             <img key={idx} src={url} alt={`Post image ${idx}`} className="w-full sm:w-auto h-auto sm:max-h-[400px] object-contain snap-center shrink-0 border-r border-slate-100 last:border-r-0" />
+             <img 
+               key={idx} 
+               src={url} 
+               alt={`Post image ${idx}`} 
+               onClick={() => setLightboxImage(url)}
+               className="w-full sm:w-auto h-auto sm:max-h-[400px] object-contain snap-center shrink-0 border-r border-slate-100 last:border-r-0 cursor-zoom-in hover:opacity-95 transition-opacity" 
+             />
           ))}
         </div>
       )}
 
       {/* Actions */}
-      <div className="px-5 py-3 border-t border-slate-100 mt-auto flex justify-between items-center bg-slate-50/50">
+      <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 mt-auto flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
         <div className="flex gap-6">
           <button 
             onClick={handleLike}
@@ -262,7 +290,7 @@ export default function PostCard({ post, onPostUpdated, onPostDeleted }) {
 
       {/* Comments Section */}
       {showComments && (
-        <div className="px-5 pb-5 bg-slate-50/30 border-t border-slate-100">
+        <div className="px-5 pb-5 bg-slate-50/30 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800">
           
           <div className="space-y-4 my-4 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
             {comments.length === 0 && commentsLoaded ? (
@@ -271,9 +299,9 @@ export default function PostCard({ post, onPostUpdated, onPostDeleted }) {
                comments.map((comment) => (
                  <div key={comment.id} className="flex gap-3">
                    <img src={comment.userAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.userName)}`} alt="Avatar" className="w-8 h-8 rounded-full flex-shrink-0" />
-                   <div className="bg-slate-100 rounded-2xl rounded-tl-sm px-4 py-2.5 max-w-[85%]">
-                     <p className="text-xs font-bold text-slate-800 mb-0.5">{comment.userName}</p>
-                     <p className="text-sm text-slate-600 whitespace-pre-wrap">{comment.content}</p>
+                   <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl rounded-tl-sm px-4 py-2.5 max-w-[85%]">
+                     <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-0.5">{comment.userName}</p>
+                     <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{comment.content}</p>
                    </div>
                  </div>
                ))
@@ -289,7 +317,7 @@ export default function PostCard({ post, onPostUpdated, onPostDeleted }) {
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="Viết bình luận..." 
-                className="w-full bg-white border border-slate-200 rounded-full pl-4 pr-12 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#372660] focus:border-[#372660]"
+                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full pl-4 pr-12 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-[#372660] focus:border-[#372660] placeholder:text-slate-400"
                 disabled={isSubmitting}
               />
               <button 
@@ -301,6 +329,30 @@ export default function PostCard({ post, onPostUpdated, onPostDeleted }) {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Image Lightbox Overlay */}
+      {lightboxImage && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button 
+            className="absolute top-4 right-4 text-white hover:text-gray-300 p-2 bg-black/50 rounded-full transition-colors z-10"
+            onClick={(e) => {
+               e.stopPropagation();
+               setLightboxImage(null);
+            }}
+          >
+            <X className="w-8 h-8" />
+          </button>
+          <img 
+            src={lightboxImage} 
+            alt="Phóng to" 
+            className="max-w-full max-h-full object-contain cursor-zoom-out shadow-2xl"
+            onClick={(e) => e.stopPropagation()} // Prevent clicking img from closing
+          />
         </div>
       )}
 

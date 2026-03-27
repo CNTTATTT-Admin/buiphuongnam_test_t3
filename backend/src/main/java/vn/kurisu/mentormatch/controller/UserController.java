@@ -42,6 +42,11 @@ public class UserController {
         return ResponseEntity.ok(userService.getById(id));
     }
 
+    @PutMapping("/me/avatar")
+    public ResponseEntity<ApiResponse<String>> updateAvatar(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        return ResponseEntity.ok(userService.updateAvatar(file));
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UserResponse>> update(@PathVariable Integer id, @RequestBody @Valid UserUpdateRequest request) {

@@ -34,6 +34,16 @@ public class Dispute {
     @Column(name = "admin_note", columnDefinition = "TEXT")
     private String adminNote;
 
+    @Column(name = "counter_reason", columnDefinition = "TEXT")
+    private String counterReason;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "counter_creator_id")
+    private User counterCreator;
+
+    @Column(name = "responded_at")
+    private LocalDateTime respondedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

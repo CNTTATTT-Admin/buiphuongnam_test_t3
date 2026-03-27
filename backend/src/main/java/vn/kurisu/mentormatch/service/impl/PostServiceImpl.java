@@ -80,7 +80,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public ApiResponse<List<PostResponse>> getAll() {
-        List<PostResponse> posts = postRepository.findAll().stream()
+        List<PostResponse> posts = postRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(this::toPostResponse)
                 .collect(Collectors.toList());
 
@@ -174,11 +174,21 @@ public class PostServiceImpl implements PostService {
             isLiked = postLikeRepository.existsByPostIdAndUserId(post.getId(), currentUserId);
         }
 
+        String authorRole = "MENTEE";
+        if (post.getUser().getRoles() != null) {
+            boolean isMentor = post.getUser().getRoles().stream()
+                    .anyMatch(r -> r.getName().equals("ROLE_MENTOR"));
+            if (isMentor) {
+                authorRole = "MENTOR";
+            }
+        }
+
         return PostResponse.builder()
                 .id(post.getId())
                 .userId(post.getUser().getId())
                 .authorName(post.getUser().getFullName())
                 .authorAvatarUrl(post.getUser().getAvatarUrl())
+                .authorRole(authorRole)
                 .content(post.getContent())
                 .imageUrls(imageUrls)
                 .createdAt(post.getCreatedAt())

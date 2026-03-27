@@ -1,13 +1,34 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { useAuth } from "../../contexts/AuthContext"
 import NotificationDropdown from "./NotificationDropdown"
 import { Button } from "../ui/button"
+import { Sun, Moon } from "lucide-react"
 
 export default function Navbar() {
   const { user, logout } = useAuth()
+  const [theme, setTheme] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('theme') || 'light'
+    }
+    return 'light'
+  })
+
+  useEffect(() => {
+    const root = document.documentElement
+    if (theme === 'dark') {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+    localStorage.setItem('theme', theme)
+  }, [theme])
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark')
+  }
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-white">
+    <nav className="sticky top-0 z-50 w-full border-b bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 transition-colors">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <div className="flex items-center gap-2 w-64 shrink-0">
@@ -24,12 +45,21 @@ export default function Navbar() {
         {/* Global Search is removed */}
 
         {/* Actions & Profile */}
-        <div className="flex items-center justify-end gap-5 w-64 shrink-0">
+        <div className="flex items-center justify-end gap-3 md:gap-5 w-64 shrink-0">
+          <button 
+            type="button"
+            onClick={toggleTheme} 
+            title="Chế độ giao diện" 
+            className="h-10 w-10 flex items-center justify-center rounded-full text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
+
           {user && <NotificationDropdown />}
 
           {user ? (
             <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold text-slate-700 hidden md:block">{user.name}</span>
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 hidden md:block">{user.name}</span>
               <a href="/settings" className="relative group cursor-pointer" title="Cài đặt hồ sơ">
                 <img 
                   src={user.avatar} 
