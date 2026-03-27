@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../services/authService';
+import profileService from '../services/profileService';
 
 const AuthContext = createContext(null);
 
@@ -8,10 +9,33 @@ export function AuthProvider({ children }) {
 
   // Check localStorage on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('mentormatch_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const initAuth = async () => {
+      const storedUser = localStorage.getItem('mentormatch_user');
+      if (storedUser) {
+        let parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        
+        // Fetch up-to-date profile to get real integer ID and current info
+        try {
+          const res = await profileService.getProfile();
+          if (res && res.code === 1000 && res.result) {
+            parsedUser = {
+              ...parsedUser,
+              id: res.result.id,
+              name: res.result.fullName || parsedUser.name,
+              avatar: res.result.avatarUrl || parsedUser.avatar,
+              role: res.result.roles?.includes("ROLE_ADMIN") ? "admin" 
+                    : res.result.roles?.includes("ROLE_MENTOR") ? "mentor" : "mentee"
+            };
+            setUser(parsedUser);
+            localStorage.setItem('mentormatch_user', JSON.stringify(parsedUser));
+          }
+        } catch (err) {
+          console.error("Could not fetch fresh profile on load", err);
+        }
+      }
+    };
+    initAuth();
   }, []);
 
   const login = async (userName, password) => {
@@ -22,18 +46,17 @@ export function AuthProvider({ children }) {
         const token = response.result.token;
         let role = 'mentee';
         
-        // For testing purposes: if username contains 'men' but not 'mentee', make them a mentor
+        // Temporary role guess, will be overridden by profile pull below
         if (userName.toLowerCase().includes('admin')) {
           role = 'admin';
         } else if (userName.toLowerCase().includes('mentor')) {
           role = 'mentor';
         } else if (userName.toLowerCase() === 'nam2' || userName.toLowerCase() === 'nam') {
-            // Also defaulting this specific test user to mentor so they can see the settings
             role = 'mentor';
         }
         
-        const userData = {
-          id: userName,
+        let userData = {
+          id: userName, // Temporary string ID
           name: userName, // Use username as name for now
           userName: userName,
           role: role,
@@ -41,8 +64,29 @@ export function AuthProvider({ children }) {
           token: token
         };
         
+        // Set immediately to allow requests within the same tick to pick up the token
         setUser(userData);
         localStorage.setItem('mentormatch_user', JSON.stringify(userData));
+
+        // Fetch real ID right after login using the newly saved token
+        try {
+          const profileRes = await profileService.getProfile();
+          if (profileRes && profileRes.code === 1000 && profileRes.result) {
+            userData = {
+              ...userData,
+              id: profileRes.result.id,
+              name: profileRes.result.fullName || userData.name,
+              avatar: profileRes.result.avatarUrl || userData.avatar,
+              role: profileRes.result.roles?.includes("ROLE_ADMIN") ? "admin" 
+                    : profileRes.result.roles?.includes("ROLE_MENTOR") ? "mentor" : "mentee"
+            };
+            setUser(userData);
+            localStorage.setItem('mentormatch_user', JSON.stringify(userData));
+          }
+        } catch (e) {
+          console.error("Could not fetch profile during login", e);
+        }
+
         return { success: true };
       }
       return { success: false, message: response?.message || 'Xác thực thất bại' };

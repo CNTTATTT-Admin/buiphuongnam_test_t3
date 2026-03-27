@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, AlertTriangle, CreditCard, LogOut, Tag } from "lucide-react"
+import { LayoutDashboard, Users, AlertTriangle, CreditCard, LogOut, Tag, Home } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
 
 export default function AdminSidebar() {
@@ -54,6 +54,16 @@ export default function AdminSidebar() {
             </button>
           )
         })}
+      </div>
+      {/* Return to Newsfeed Button */}
+      <div className="px-4 mb-4 mt-auto">
+        <button
+          onClick={() => navigate('/')}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold text-[#372660] bg-indigo-50 hover:bg-indigo-100 transition-colors border border-indigo-100 shadow-sm"
+        >
+          <Home className="w-4 h-4" />
+          Về trang Newsfeed
+        </button>
       </div>
 
       {/* Bottom Profile Widget */}

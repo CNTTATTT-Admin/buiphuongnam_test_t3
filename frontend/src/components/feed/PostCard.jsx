@@ -1,9 +1,11 @@
-import React, { useState } from "react"
-import { MoreHorizontal, Heart, MessageSquare, Send } from "lucide-react"
+import React, { useState, useEffect } from "react"
+import { MoreHorizontal, Heart, MessageSquare, Send, Edit2, Trash2, X, UserPlus, UserCheck } from "lucide-react"
 import postInteractionService from "../../services/postInteractionService"
+import { postService } from "../../services/postService"
+import followService from "../../services/followService"
 import { useAuth } from "../../contexts/AuthContext"
 
-export default function PostCard({ post }) {
+export default function PostCard({ post, onPostUpdated, onPostDeleted }) {
   const { user } = useAuth()
   
   // Use backend properties or fallback to empty strings
@@ -21,6 +23,66 @@ export default function PostCard({ post }) {
   const [newComment, setNewComment] = useState("")
   const [commentsLoaded, setCommentsLoaded] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editContent, setEditContent] = useState(post.content)
+  const [isFollowing, setIsFollowing] = useState(false)
+
+  const isAuthor = user?.id === post.userId;
+
+  useEffect(() => {
+    if (!isAuthor && user) {
+      checkFollowStatus();
+    }
+  }, [post.userId, isAuthor, user]);
+
+  const checkFollowStatus = async () => {
+    try {
+      const res = await followService.checkFollowStatus(post.userId);
+      if (res && res.code === 1000) {
+        setIsFollowing(res.result);
+      }
+    } catch (e) {
+      console.error("Lỗi khi kiểm tra trạng thái follow", e);
+    }
+  }
+
+  const handleFollowToggle = async () => {
+    // Optimistic UI update
+    setIsFollowing(!isFollowing);
+    try {
+      await followService.toggleFollow(post.userId);
+      window.dispatchEvent(new Event('followStatusChanged'));
+    } catch (e) {
+      setIsFollowing(!isFollowing); // revert
+      console.error("Lỗi khi follow/unfollow", e);
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa bài viết này không?")) return;
+    try {
+      const res = await postService.deletePost(post.id);
+      if (res.code === 1000 && onPostDeleted) {
+        onPostDeleted(post.id);
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa bài viết", error);
+    }
+  }
+
+  const handleUpdate = async () => {
+    if (!editContent.trim()) return;
+    try {
+      const res = await postService.updatePost(post.id, editContent);
+      if (res.code === 1000) {
+        setIsEditing(false);
+        if (onPostUpdated) onPostUpdated(res.result);
+      }
+    } catch (error) {
+      console.error("Lỗi khi cập nhật bài viết", error);
+    }
+  }
 
   const handleLike = async () => {
     // Optimistic UI Update
@@ -79,22 +141,93 @@ export default function PostCard({ post }) {
         <div className="flex gap-3">
           <img src={avatar} alt={authorName} className="w-10 h-10 rounded-full object-cover shrink-0" />
           <div>
-            <h4 className="font-semibold text-slate-900 leading-tight">{authorName}</h4>
+            <div className="flex items-center gap-2">
+              <h4 className="font-semibold text-slate-900 leading-tight">{authorName}</h4>
+              {!isAuthor && (
+                <>
+                  <span className="text-slate-300 mx-1 flex-shrink-0">•</span>
+                  <button 
+                    onClick={handleFollowToggle}
+                    className={`text-xs font-bold transition-colors flex items-center gap-1 whitespace-nowrap ${
+                      isFollowing ? "text-slate-500 hover:text-red-500" : "text-[#372660] hover:text-[#2b1d4c]"
+                    }`}
+                  >
+                    {isFollowing ? (
+                      <>
+                        <UserCheck className="w-3.5 h-3.5" /> Bỏ theo dõi
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="w-3.5 h-3.5" /> Theo dõi
+                      </>
+                    )}
+                  </button>
+                </>
+              )}
+            </div>
             <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
               <span>{time}</span>
             </div>
           </div>
         </div>
-        <button className="text-slate-400 hover:text-slate-600 p-1">
-          <MoreHorizontal className="w-5 h-5" />
-        </button>
+        {isAuthor && (
+          <div className="relative">
+            <button 
+              onClick={() => setShowMenu(!showMenu)} 
+              className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors"
+            >
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
+            {showMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-100 py-1 z-10">
+                <button 
+                  onClick={() => { setIsEditing(true); setShowMenu(false); }}
+                  className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                >
+                  <Edit2 className="w-4 h-4" /> Chỉnh sửa
+                </button>
+                <button 
+                  onClick={() => { handleDelete(); setShowMenu(false); }}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" /> Xóa bài viết
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Content */}
       <div className="px-5 mb-4">
-        <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
-          {post.content}
-        </p>
+        {isEditing ? (
+          <div className="flex flex-col gap-3">
+            <textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="w-full border border-slate-200 rounded-lg p-3 text-sm text-slate-700 focus:outline-none focus:border-[#372660] focus:ring-1 focus:ring-[#372660] min-h-[100px] resize-y"
+            />
+            <div className="flex justify-end gap-2">
+              <button 
+                onClick={() => { setIsEditing(false); setEditContent(post.content); }}
+                className="px-4 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
+              >
+                Hủy
+              </button>
+              <button 
+                onClick={handleUpdate}
+                disabled={!editContent.trim()}
+                className="px-4 py-1.5 text-sm font-medium text-white bg-[#372660] hover:bg-[#2b1d4c] rounded-md transition-colors disabled:opacity-50"
+              >
+                Lưu
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
+            {post.content}
+          </p>
+        )}
       </div>
 
       {/* Images if available */}

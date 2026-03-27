@@ -1,37 +1,74 @@
-import React from "react"
-import { Star } from "lucide-react"
-import { MOCK_TOP_MENTORS, MOCK_TAGS } from "../../data/mockData"
+import React, { useState, useEffect } from "react"
+import { Star, UserCheck } from "lucide-react"
+import { MOCK_TAGS } from "../../data/mockData"
+import followService from "../../services/followService"
 
 export default function RightSidebar() {
+  const [following, setFollowing] = useState([])
+
+  useEffect(() => {
+    fetchFollowing()
+
+    const handleFollowChange = () => {
+      fetchFollowing()
+    }
+
+    window.addEventListener('followStatusChanged', handleFollowChange)
+
+    return () => {
+      window.removeEventListener('followStatusChanged', handleFollowChange)
+    }
+  }, [])
+
+  const fetchFollowing = async () => {
+    try {
+      const res = await followService.getFollowing()
+      if (res && res.code === 1000) {
+        setFollowing(res.result || [])
+      }
+    } catch (err) {
+      console.error("Failed to load following list", err)
+    }
+  }
+
   return (
     <div className="w-80 shrink-0 hidden lg:block space-y-6 sticky top-24">
-      {/* Top Mentors */}
+      {/* Following List */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="font-bold text-slate-800">Top Mentors nổi bật</h3>
-          <a href="#" className="text-xs text-[#372660] font-medium hover:underline">
-            Xem tất cả
-          </a>
+          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+            <UserCheck className="w-4 h-4 text-[#372660]" />
+            Đang theo dõi
+          </h3>
+          <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+            {following.length}
+          </span>
         </div>
         
-        <div className="space-y-4">
-          {MOCK_TOP_MENTORS.map((mentor) => (
-            <div key={mentor.id} className="flex items-center gap-3">
-              <img src={mentor.avatar} alt={mentor.name} className="w-10 h-10 rounded-full object-cover" />
-              <div className="flex-1">
-                <h4 className="text-sm font-semibold text-slate-900">{mentor.name}</h4>
-                <div className="flex flex-col gap-0.5 mt-0.5">
-                  <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-sm w-fit">
-                    {mentor.tag}
-                  </span>
-                  <div className="flex items-center gap-1 text-xs text-amber-500 font-medium">
-                    <Star className="w-3 h-3 fill-current" />
-                    {mentor.rating.toFixed(1)}
-                  </div>
+        <div className="space-y-4 max-h-[350px] overflow-y-auto custom-scrollbar pr-2">
+          {following.length === 0 ? (
+            <p className="text-xs text-slate-500 text-center py-4">
+              Bạn chưa theo dõi ai.
+            </p>
+          ) : (
+            following.map((user) => (
+              <div key={user.id} className="flex items-center gap-3">
+                <img 
+                  src={user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName || user.userName)}`} 
+                  alt={user.fullName} 
+                  className="w-10 h-10 rounded-full object-cover" 
+                />
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-semibold text-slate-900 truncate">
+                    {user.fullName || user.userName}
+                  </h4>
+                  <p className="text-xs text-slate-500 truncate">
+                    @{user.userName}
+                  </p>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
