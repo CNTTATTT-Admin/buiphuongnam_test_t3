@@ -1,0 +1,165 @@
+package vn.kurisu.mentormatch.service.impl;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import vn.kurisu.mentormatch.dto.response.ApiResponse;
+import vn.kurisu.mentormatch.dto.response.CertificateResponseDto;
+import vn.kurisu.mentormatch.dto.response.MenteeProfileResponse;
+import vn.kurisu.mentormatch.dto.response.MentorProfileResponse;
+import vn.kurisu.mentormatch.dto.response.UserProfileResponse;
+import vn.kurisu.mentormatch.entity.MenteeProfile;
+import vn.kurisu.mentormatch.entity.MentorProfile;
+import vn.kurisu.mentormatch.entity.Role;
+import vn.kurisu.mentormatch.entity.Skill;
+import vn.kurisu.mentormatch.entity.User;
+import vn.kurisu.mentormatch.exception.AppException;
+import vn.kurisu.mentormatch.exception.ErrorCode;
+import vn.kurisu.mentormatch.repository.UserRepository;
+import vn.kurisu.mentormatch.repository.TimeSlotRepository;
+import vn.kurisu.mentormatch.repository.ReviewRepository;
+import vn.kurisu.mentormatch.repository.BookingRepository;
+import vn.kurisu.mentormatch.service.PublicMentorService;
+import vn.kurisu.mentormatch.entity.SlotStatus;
+import vn.kurisu.mentormatch.dto.response.TimeSlotResponse;
+import java.time.LocalDateTime;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class PublicMentorServiceImpl implements PublicMentorService {
+
+    private final UserRepository userRepository;
+    private final TimeSlotRepository timeSlotRepository;
+    private final ReviewRepository reviewRepository;
+    private final BookingRepository bookingRepository;
+
+    @Override
+    public ApiResponse<List<UserProfileResponse>> getAllPublicMentors() {
+        // Query users with ROLE_MENTOR, returning the mapped ProfileResponses
+        List<UserProfileResponse> mentors = userRepository.findByRolesName("ROLE_MENTOR").stream()
+                .map(this::mapToUserProfileResponse)
+                .collect(Collectors.toList());
+
+        return ApiResponse.<List<UserProfileResponse>>builder()
+                .result(mentors)
+                .build();
+    }
+
+    @Override
+    public ApiResponse<List<UserProfileResponse>> searchMentors(String keyword) {
+        List<UserProfileResponse> mentors;
+        if (keyword == null || keyword.trim().isEmpty()) {
+            mentors = userRepository.findByRolesName("ROLE_MENTOR").stream()
+                    .map(this::mapToUserProfileResponse)
+                    .collect(Collectors.toList());
+        } else {
+            mentors = userRepository.searchMentorsByKeyword(keyword.trim()).stream()
+                    .map(this::mapToUserProfileResponse)
+                    .collect(Collectors.toList());
+        }
+
+        return ApiResponse.<List<UserProfileResponse>>builder()
+                .result(mentors)
+                .build();
+    }
+
+    @Override
+    public ApiResponse<UserProfileResponse> getPublicMentorProfile(Integer id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        boolean isMentor = user.getRoles().stream()
+                .anyMatch(role -> role.getName().equals("ROLE_MENTOR"));
+
+        if (!isMentor) {
+            throw new RuntimeException("User is not a mentor");
+        }
+
+        return ApiResponse.<UserProfileResponse>builder()
+                .result(mapToUserProfileResponse(user))
+                .build();
+    }
+
+    @Override
+    public ApiResponse<List<TimeSlotResponse>> getPublicMentorTimeSlots(Integer mentorId) {
+        User user = userRepository.findById(mentorId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        boolean isMentor = user.getRoles().stream()
+                .anyMatch(role -> role.getName().equals("ROLE_MENTOR"));
+
+        if (!isMentor) {
+            throw new RuntimeException("User is not a mentor");
+        }
+
+        List<TimeSlotResponse> slots = timeSlotRepository.findUpcomingSlotsByMentorId(mentorId, LocalDateTime.now()).stream()
+                .filter(slot -> slot.getStatus() == SlotStatus.AVAILABLE)
+                .map(slot -> TimeSlotResponse.builder()
+                        .id(slot.getId())
+                        .mentorId(slot.getMentor().getId())
+                        .startTime(slot.getStartTime())
+                        .endTime(slot.getEndTime())
+                        .price(slot.getPrice())
+                        .status(slot.getStatus())
+                        .build())
+                .collect(Collectors.toList());
+
+        return ApiResponse.<List<TimeSlotResponse>>builder()
+                .result(slots)
+                .build();
+    }
+
+    private UserProfileResponse mapToUserProfileResponse(User user) {
+        return UserProfileResponse.builder()
+                .id(user.getId())
+                .userName(user.getUserName())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .avatarUrl(user.getAvatarUrl())
+                .phone(user.getPhone())
+                .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
+                .mentorProfile(mapToMentorProfileResponse(user))
+                .menteeProfile(mapToMenteeProfileResponse(user.getMenteeProfile()))
+                .build();
+    }
+
+    private MentorProfileResponse mapToMentorProfileResponse(User user) {
+        MentorProfile profile = user.getMentorProfile();
+        if (profile == null) return null;
+        
+        Double rating = reviewRepository.getAverageRatingByMentorId(user.getId());
+        Long students = bookingRepository.countDistinctMenteesByMentorId(user.getId());
+
+        return MentorProfileResponse.builder()
+                .id(profile.getId())
+                .title(profile.getTitle())
+                .bio(profile.getBio())
+                .yearsOfExperience(profile.getYearsOfExperience())
+                .isVerified(profile.getIsVerified())
+                .walletBalance(profile.getWalletBalance())
+                .skills(profile.getSkills().stream().map(Skill::getName).collect(Collectors.toList()))
+                .certificates(profile.getCertificates().stream().map(c -> 
+                    CertificateResponseDto.builder()
+                        .id(c.getId())
+                        .name(c.getName())
+                        .fileUrl(c.getFileUrl())
+                        .isApproved(c.getIsApproved())
+                        .build()
+                ).collect(Collectors.toList()))
+                .rating(rating)
+                .totalStudents(students)
+                .build();
+    }
+
+    private MenteeProfileResponse mapToMenteeProfileResponse(MenteeProfile profile) {
+        if (profile == null) return null;
+        return MenteeProfileResponse.builder()
+                .id(profile.getId())
+                .currentEducation(profile.getCurrentEducation())
+                .learningGoals(profile.getLearningGoals())
+                .interests(profile.getInterests())
+                .build();
+    }
+}
