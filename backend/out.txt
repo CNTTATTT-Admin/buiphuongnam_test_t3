@@ -1,0 +1,49 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< vn.kurisu:mentormatch >------------------------
+[INFO] Building MentorMatch 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.3.2:clean (default-clean) @ mentormatch ---
+[INFO] Deleting G:\TechByteIntern\buiphuongnam_test_t3\backend\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ mentormatch ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ mentormatch ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 143 source files with javac [debug release 17] to target\classes
+[INFO] -------------------------------------------------------------
+[WARNING] COMPILATION WARNING : 
+[INFO] -------------------------------------------------------------
+[WARNING] /G:/TechByteIntern/buiphuongnam_test_t3/backend/src/main/java/vn/kurisu/mentormatch/entity/TimeSlot.java:[39,24] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[INFO] 1 warning
+[INFO] -------------------------------------------------------------
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /G:/TechByteIntern/buiphuongnam_test_t3/backend/src/main/java/vn/kurisu/mentormatch/service/impl/DisputeServiceImpl.java:[135,56] cannot find symbol
+  symbol:   method findByBookingIdAndStatus(java.lang.Integer,vn.kurisu.mentormatch.entity.PaymentStatus)
+  location: variable paymentRepository of type vn.kurisu.mentormatch.repository.PaymentRepository
+[INFO] 1 error
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  21.005 s
+[INFO] Finished at: 2026-03-26T11:01:12+07:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project mentormatch: Compilation failure
+[ERROR] /G:/TechByteIntern/buiphuongnam_test_t3/backend/src/main/java/vn/kurisu/mentormatch/service/impl/DisputeServiceImpl.java:[135,56] cannot find symbol
+[ERROR]   symbol:   method findByBookingIdAndStatus(java.lang.Integer,vn.kurisu.mentormatch.entity.PaymentStatus)
+[ERROR]   location: variable paymentRepository of type vn.kurisu.mentormatch.repository.PaymentRepository
+[ERROR] 
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

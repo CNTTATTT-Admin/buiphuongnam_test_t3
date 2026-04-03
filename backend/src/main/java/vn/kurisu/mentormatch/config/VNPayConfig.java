@@ -19,6 +19,9 @@ public class VNPayConfig {
     @Value("${vnpay.vnp_PayUrl}")
     public String vnp_PayUrl;
 
+    @Value("${vnpay.vnp_ApiUrl}")
+    public String vnp_ApiUrl;
+
     @Value("${vnpay.returnUrl}")
     public String vnp_ReturnUrl;
 

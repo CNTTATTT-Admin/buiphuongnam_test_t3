@@ -8,4 +8,5 @@ import vn.kurisu.mentormatch.dto.response.AuthResponse;
 public interface AuthService {
     ApiResponse<AuthResponse> register(RegisterRequest request);
     ApiResponse<AuthResponse> login(LoginRequest request);
+    ApiResponse<Void> logout();
 }

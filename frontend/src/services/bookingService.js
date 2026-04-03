@@ -11,7 +11,17 @@ export const bookingService = {
     }
   },
 
-  getMyTraineeBookings: async (page = 0, size = 5, status = "ALL") => {
+  payExistingBooking: async (bookingId) => {
+    try {
+      const response = await api.get(`/payments/vnpay/booking/${bookingId}`);
+      return response;
+    } catch (error) {
+      console.error('Error generating payment url:', error);
+      throw error;
+    }
+  },
+
+  getMyTraineeBookings: async (page = 0, size = 10, status = "ALL") => {
     try {
       const statusParam = status !== "ALL" ? `&status=${status}` : "";
       const response = await api.get(`/bookings/my-bookings?page=${page}&size=${size}${statusParam}`);

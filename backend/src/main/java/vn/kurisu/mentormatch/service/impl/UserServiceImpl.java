@@ -15,20 +15,28 @@ import vn.kurisu.mentormatch.exception.AppException;
 import vn.kurisu.mentormatch.exception.ErrorCode;
 import vn.kurisu.mentormatch.repository.RoleRepository;
 import vn.kurisu.mentormatch.repository.UserRepository;
+import vn.kurisu.mentormatch.repository.ReviewRepository;
 import vn.kurisu.mentormatch.service.UserService;
+import vn.kurisu.mentormatch.dto.response.MentorProfileResponse;
+import vn.kurisu.mentormatch.service.CloudinaryService;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CloudinaryService cloudinaryService;
+    private final ReviewRepository reviewRepository;
 
     @Override
     public ApiResponse<UserResponse> create(UserCreationRequest request) {
@@ -130,6 +138,34 @@ public class UserServiceImpl implements UserService {
         return ApiResponse.<Void>builder().message("User has been deleted").build();
     }
 
+    @Override
+    public ApiResponse<String> updateAvatar(org.springframework.web.multipart.MultipartFile file) {
+        org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        String userName = authentication.getName();
+        User user = userRepository.findByUserName(userName)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("File is empty");
+        }
+
+        if (user.getAvatarUrl() != null && user.getAvatarUrl().contains("cloudinary.com")) {
+            cloudinaryService.deleteImage(user.getAvatarUrl());
+        }
+
+        String url = cloudinaryService.uploadImage(file);
+        user.setAvatarUrl(url);
+        userRepository.save(user);
+
+        return ApiResponse.<String>builder()
+                .message("Avatar updated successfully")
+                .result(url)
+                .build();
+    }
+
     private UserResponse toUserResponse(User user) {
         Set<RoleResponse> roleResponses = user.getRoles().stream()
                 .map(role -> RoleResponse.builder()
@@ -148,6 +184,25 @@ public class UserServiceImpl implements UserService {
                     .build();
         }
 
+        MentorProfileResponse mentorProfileResponse = null;
+        if (user.getMentorProfile() != null) {
+            Double rating = reviewRepository.getAverageRatingByMentorId(user.getId());
+            Integer reviewCount = reviewRepository.findByMentorIdOrderByCreatedAtDesc(user.getId()).size();
+
+            mentorProfileResponse = MentorProfileResponse.builder()
+                    .id(user.getMentorProfile().getId())
+                    .title(user.getMentorProfile().getTitle())
+                    .bio(user.getMentorProfile().getBio())
+                    .yearsOfExperience(user.getMentorProfile().getYearsOfExperience())
+                    .isVerified(user.getMentorProfile().getIsVerified())
+                    .walletBalance(user.getMentorProfile().getWalletBalance())
+                    .skills(user.getMentorProfile().getSkills() != null ? 
+                            user.getMentorProfile().getSkills().stream().map(s -> s.getName()).collect(Collectors.toList()) : null)
+                    .rating(rating)
+                    .reviewCount(reviewCount)
+                    .build();
+        }
+
         return UserResponse.builder()
                 .id(user.getId())
                 .userName(user.getUserName())
@@ -158,6 +213,7 @@ public class UserServiceImpl implements UserService {
                 .isActive(user.getIsActive())
                 .roles(roleResponses)
                 .menteeProfile(menteeProfileResponse)
+                .mentorProfile(mentorProfileResponse)
                 .build();
     }
 }

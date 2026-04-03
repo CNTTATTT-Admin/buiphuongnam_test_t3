@@ -95,4 +95,13 @@ public class AuthServiceImpl implements AuthService {
             throw new BadCredentialsException("Invalid username or password");
         }
     }
+
+    @Override
+    public ApiResponse<Void> logout() {
+        SecurityContextHolder.clearContext();
+
+        return ApiResponse.<Void>builder()
+                .message("Logout successful")
+                .build();
+    }
 }

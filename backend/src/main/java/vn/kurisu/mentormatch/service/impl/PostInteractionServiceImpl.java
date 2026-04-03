@@ -18,6 +18,7 @@ import vn.kurisu.mentormatch.repository.CommentRepository;
 import vn.kurisu.mentormatch.repository.PostLikeRepository;
 import vn.kurisu.mentormatch.repository.PostRepository;
 import vn.kurisu.mentormatch.repository.UserRepository;
+import vn.kurisu.mentormatch.service.NotificationService;
 import vn.kurisu.mentormatch.service.PostInteractionService;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class PostInteractionServiceImpl implements PostInteractionService {
     private final PostLikeRepository postLikeRepository;
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     private User getCurrentUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -67,6 +69,21 @@ public class PostInteractionServiceImpl implements PostInteractionService {
             postLikeRepository.save(newLike);
             post.setLikeCount(post.getLikeCount() + 1);
             postRepository.save(post);
+
+            User postOwner = post.getUser();
+            if (postOwner != null && !postOwner.getId().equals(currentUser.getId())) {
+                String actorName = currentUser.getFullName() != null && !currentUser.getFullName().isBlank()
+                        ? currentUser.getFullName()
+                        : currentUser.getUserName();
+                notificationService.sendNotification(
+                        postOwner,
+                        "Bài viết của bạn có lượt thích mới",
+                        actorName + " đã thích bài viết của bạn.",
+                        "POST_LIKED",
+                        post.getId()
+                );
+            }
+
             return ApiResponse.<Void>builder().message("Liked post").build();
         }
     }
@@ -85,6 +102,30 @@ public class PostInteractionServiceImpl implements PostInteractionService {
                 .build();
 
         comment = commentRepository.save(comment);
+
+        User postOwner = post.getUser();
+        if (postOwner != null && !postOwner.getId().equals(currentUser.getId())) {
+            String actorName = currentUser.getFullName() != null && !currentUser.getFullName().isBlank()
+                ? currentUser.getFullName()
+                : currentUser.getUserName();
+
+            String commentContent = request.getContent() == null ? "" : request.getContent().trim();
+            String preview = commentContent.length() > 80
+                ? commentContent.substring(0, 77) + "..."
+                : commentContent;
+
+            String message = preview.isEmpty()
+                ? actorName + " đã bình luận bài viết của bạn."
+                : actorName + " đã bình luận: \"" + preview + "\"";
+
+            notificationService.sendNotification(
+                postOwner,
+                "Bài viết của bạn có bình luận mới",
+                message,
+                "POST_COMMENTED",
+                post.getId()
+            );
+        }
 
         return ApiResponse.<CommentResponse>builder()
                 .message("Comment added successfully")

@@ -16,6 +16,8 @@ import vn.kurisu.mentormatch.exception.AppException;
 import vn.kurisu.mentormatch.exception.ErrorCode;
 import vn.kurisu.mentormatch.repository.UserRepository;
 import vn.kurisu.mentormatch.repository.TimeSlotRepository;
+import vn.kurisu.mentormatch.repository.ReviewRepository;
+import vn.kurisu.mentormatch.repository.BookingRepository;
 import vn.kurisu.mentormatch.service.PublicMentorService;
 import vn.kurisu.mentormatch.entity.SlotStatus;
 import vn.kurisu.mentormatch.dto.response.TimeSlotResponse;
@@ -30,6 +32,8 @@ public class PublicMentorServiceImpl implements PublicMentorService {
 
     private final UserRepository userRepository;
     private final TimeSlotRepository timeSlotRepository;
+    private final ReviewRepository reviewRepository;
+    private final BookingRepository bookingRepository;
 
     @Override
     public ApiResponse<List<UserProfileResponse>> getAllPublicMentors() {
@@ -37,6 +41,24 @@ public class PublicMentorServiceImpl implements PublicMentorService {
         List<UserProfileResponse> mentors = userRepository.findByRolesName("ROLE_MENTOR").stream()
                 .map(this::mapToUserProfileResponse)
                 .collect(Collectors.toList());
+
+        return ApiResponse.<List<UserProfileResponse>>builder()
+                .result(mentors)
+                .build();
+    }
+
+    @Override
+    public ApiResponse<List<UserProfileResponse>> searchMentors(String keyword) {
+        List<UserProfileResponse> mentors;
+        if (keyword == null || keyword.trim().isEmpty()) {
+            mentors = userRepository.findByRolesName("ROLE_MENTOR").stream()
+                    .map(this::mapToUserProfileResponse)
+                    .collect(Collectors.toList());
+        } else {
+            mentors = userRepository.searchMentorsByKeyword(keyword.trim()).stream()
+                    .map(this::mapToUserProfileResponse)
+                    .collect(Collectors.toList());
+        }
 
         return ApiResponse.<List<UserProfileResponse>>builder()
                 .result(mentors)
@@ -98,13 +120,18 @@ public class PublicMentorServiceImpl implements PublicMentorService {
                 .avatarUrl(user.getAvatarUrl())
                 .phone(user.getPhone())
                 .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
-                .mentorProfile(mapToMentorProfileResponse(user.getMentorProfile()))
+                .mentorProfile(mapToMentorProfileResponse(user))
                 .menteeProfile(mapToMenteeProfileResponse(user.getMenteeProfile()))
                 .build();
     }
 
-    private MentorProfileResponse mapToMentorProfileResponse(MentorProfile profile) {
+    private MentorProfileResponse mapToMentorProfileResponse(User user) {
+        MentorProfile profile = user.getMentorProfile();
         if (profile == null) return null;
+        
+        Double rating = reviewRepository.getAverageRatingByMentorId(user.getId());
+        Long students = bookingRepository.countDistinctMenteesByMentorId(user.getId());
+
         return MentorProfileResponse.builder()
                 .id(profile.getId())
                 .title(profile.getTitle())
@@ -121,6 +148,8 @@ public class PublicMentorServiceImpl implements PublicMentorService {
                         .isApproved(c.getIsApproved())
                         .build()
                 ).collect(Collectors.toList()))
+                .rating(rating)
+                .totalStudents(students)
                 .build();
     }
 

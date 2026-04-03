@@ -1,10 +1,7 @@
 package vn.kurisu.mentormatch.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import vn.kurisu.mentormatch.dto.response.ApiResponse;
 import vn.kurisu.mentormatch.dto.response.UserProfileResponse;
 import vn.kurisu.mentormatch.dto.response.TimeSlotResponse;
@@ -22,6 +19,12 @@ public class PublicMentorController {
     @GetMapping
     public ApiResponse<List<UserProfileResponse>> getAllMentors() {
         return publicMentorService.getAllPublicMentors();
+    }
+
+    @GetMapping("/search")
+    public ApiResponse<List<UserProfileResponse>> searchMentors(
+            @RequestParam(required = false, defaultValue = "") String keyword) {
+        return publicMentorService.searchMentors(keyword);
     }
 
     @GetMapping("/{id}")

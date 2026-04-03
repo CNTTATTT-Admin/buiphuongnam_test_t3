@@ -29,17 +29,22 @@ public class PostController {
         return ResponseEntity.ok(postService.getAll());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<List<PostResponse>>> getMyPosts() {
+        return ResponseEntity.ok(postService.getMyPosts());
+    }
+
+    @GetMapping("/{id:\\d+}")
     public ResponseEntity<ApiResponse<PostResponse>> getById(@PathVariable Integer id) {
         return ResponseEntity.ok(postService.getById(id));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id:\\d+}")
     public ResponseEntity<ApiResponse<PostResponse>> update(@PathVariable Integer id, @RequestBody @Valid PostUpdateRequest request) {
         return ResponseEntity.ok(postService.update(id, request));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:\\d+}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Integer id) {
         return ResponseEntity.ok(postService.delete(id));
     }

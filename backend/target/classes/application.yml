@@ -1,36 +1,76 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 spring:
+  config:
+    import: optional:file:.env[.properties],optional:file:backend/.env[.properties],optional:file:../backend/.env[.properties],optional:file:../.env[.properties]
   application:
     name: MentorMatch
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:google-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:google-client-secret}
+            scope:
+              - openid
+              - profile
+              - email
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
   datasource:
-    url: jdbc:mysql://localhost:3306/mentormatch_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: root
-    password: Darlingofme # Replace with your local mysql password if necessary
+    url: ${DB_URL:jdbc:mysql://localhost:3306/mentormatch_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:false}
     properties:
       hibernate:
-        format_sql: true
+        format_sql: ${JPA_FORMAT_SQL:true}
         dialect: org.hibernate.dialect.MySQL8Dialect
 
-app:
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
 
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE:true}
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174,http://localhost:5175}
+  oauth2:
+    authorized-redirect-uri: ${OAUTH2_AUTHORIZED_REDIRECT_URI:http://localhost:5173/auth/google/callback}
+    failure-redirect-uri: ${OAUTH2_FAILURE_REDIRECT_URI:http://localhost:5173/auth?oauthError=Google%20login%20failed}
   jwt:
-    secret: "3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b" # At least 256-bit key for HMAC-SHA256
-    expiration: 3600000  #1 hours in milliseconds
-  
+    secret: ${JWT_SECRET:replace_me_with_at_least_32_bytes_secret_for_hs256_local_dev_123456}
+    expiration: ${JWT_EXPIRATION:3600000}
   cloudinary:
-    cloud_name: dhz3ngdeg # Replace with your Cloudinary cloud name
-    api_key: 416376455625773 # Replace with your Cloudinary API key
-    api_secret: 1ALNNm10-bDmv41SFM_20J-5H3A # Replace with your Cloudinary API secret
+    cloud_name: ${CLOUDINARY_CLOUD_NAME:}
+    api_key: ${CLOUDINARY_API_KEY:}
+    api_secret: ${CLOUDINARY_API_SECRET:}
+
+frontend:
+  paymentResultUrl: ${FRONTEND_PAYMENT_RESULT_URL:http://localhost:5173/payment-result}
+
 vnpay:
-    tmnCode: "PIUY8BWH"
-    secretKey: "LZFA9YCG9QU9LMD31GGQ98UA2JWJD0X9"
-    vnp_PayUrl: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
-    returnUrl: "http://localhost:8080/api/payment/vnpay-return" 
+  tmnCode: ${VNPAY_TMN_CODE:PIUY8BWH}
+  secretKey: ${VNPAY_SECRET_KEY:LZFA9YCG9QU9LMD31GGQ98UA2JWJD0X9}
+  vnp_PayUrl: ${VNPAY_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+  vnp_ApiUrl: ${VNPAY_API_URL:https://sandbox.vnpayment.vn/merchant_webapi/api/transaction}
+  returnUrl: ${VNPAY_RETURN_URL:http://localhost:8080/api/payment/vnpay-return}

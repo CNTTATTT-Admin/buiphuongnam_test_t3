@@ -13,5 +13,6 @@ public interface UserService {
     ApiResponse<List<UserResponse>> getMentors();
     ApiResponse<UserResponse> getById(Integer id);
     ApiResponse<UserResponse> update(Integer id, UserUpdateRequest request);
+    ApiResponse<String> updateAvatar(org.springframework.web.multipart.MultipartFile file);
     ApiResponse<Void> delete(Integer id);
 }

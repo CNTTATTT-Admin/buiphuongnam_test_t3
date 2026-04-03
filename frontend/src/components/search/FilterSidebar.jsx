@@ -1,8 +1,40 @@
-import React, { useState } from "react"
-import { MOCK_FILTER_SKILLS } from "../../data/mockData"
+import React, { useState, useEffect } from "react"
+import api from "../../services/api"
 
-export default function FilterSidebar() {
-  const [priceRange, setPriceRange] = useState(500)
+export default function FilterSidebar({ onSkillClick }) {
+  const [skills, setSkills] = useState([])
+  const [selectedSkills, setSelectedSkills] = useState([])
+
+  useEffect(() => {
+    const fetchSkills = async () => {
+      try {
+        const res = await api.get('/public/skills')
+        if (res.code === 1000) {
+          setSkills(res.result || [])
+        }
+      } catch (err) {
+        console.error("Failed to load skills", err)
+      }
+    }
+    fetchSkills()
+  }, [])
+
+  const handleSkillToggle = (skillName) => {
+    const isSelected = selectedSkills.includes(skillName)
+    if (isSelected) {
+      setSelectedSkills(prev => prev.filter(s => s !== skillName))
+    } else {
+      setSelectedSkills(prev => [...prev, skillName])
+    }
+    if (onSkillClick) {
+      onSkillClick(isSelected ? "" : skillName)
+    }
+  }
+
+  const handleClearAll = () => {
+    setSelectedSkills([])
+    if (onSkillClick) onSkillClick("")
+  }
 
   return (
     <div className="w-64 shrink-0 hidden md:block bg-white rounded-xl shadow-sm border border-slate-100 p-5 sticky top-24 self-start">
@@ -13,46 +45,33 @@ export default function FilterSidebar() {
           </svg>
           <h3 className="font-bold text-slate-800">Bộ lọc nâng cao</h3>
         </div>
-        <button className="text-xs text-slate-500 hover:text-[#372660]">Xóa tất cả</button>
+        <button onClick={handleClearAll} className="text-xs text-slate-500 hover:text-[#372660]">Xóa tất cả</button>
       </div>
 
       {/* Skills Filter */}
       <div className="mb-6">
         <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Kỹ Năng</h4>
-        <div className="space-y-2.5">
-          {MOCK_FILTER_SKILLS.map((skill, index) => (
-            <label key={index} className="flex items-center gap-3 cursor-pointer group">
-              <div className="relative flex items-center justify-center">
-                <input 
-                  type="checkbox" 
-                  className="peer appearance-none w-4 h-4 rounded border border-slate-300 checked:bg-[#372660] checked:border-[#372660] cursor-pointer transition-colors"
-                  defaultChecked={index === 0 || index === 2}
-                />
-                <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              </div>
-              <span className="text-sm text-slate-700 group-hover:text-slate-900">{skill}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Price Filter */}
-      <div className="mb-6">
-        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Mức Giá (VNĐ)</h4>
-        <div className="px-1">
-          {/* Mock Dual Slider Track */}
-          <div className="relative h-1.5 bg-slate-200 rounded-full mb-4">
-            <div className="absolute left-[20%] right-[30%] h-full bg-[#372660] rounded-full"></div>
-            <div className="absolute left-[20%] top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 bg-[#372660] rounded-full shadow-md border-2 border-white cursor-pointer"></div>
-            <div className="absolute right-[30%] top-1/2 -translate-y-1/2 translate-x-1/2 w-4 h-4 bg-[#372660] rounded-full shadow-md border-2 border-white cursor-pointer"></div>
-          </div>
-          <div className="flex justify-between text-xs font-medium text-slate-500">
-            <span>100k</span>
-            <span>500k</span>
-            <span>1M+</span>
-          </div>
+        <div className="space-y-2.5 max-h-[250px] overflow-y-auto pr-1">
+          {skills.length === 0 ? (
+            <p className="text-xs text-slate-400">Đang tải kỹ năng...</p>
+          ) : (
+            skills.map((skill) => (
+              <label key={skill.id} className="flex items-center gap-3 cursor-pointer group">
+                <div className="relative flex items-center justify-center">
+                  <input 
+                    type="checkbox" 
+                    className="peer appearance-none w-4 h-4 rounded border border-slate-300 checked:bg-[#372660] checked:border-[#372660] cursor-pointer transition-colors"
+                    checked={selectedSkills.includes(skill.name)}
+                    onChange={() => handleSkillToggle(skill.name)}
+                  />
+                  <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+                <span className="text-sm text-slate-700 group-hover:text-slate-900">{skill.name}</span>
+              </label>
+            ))
+          )}
         </div>
       </div>
 
