@@ -50,6 +50,19 @@ const authService = {
     }
   },
 
+  refreshToken: async (refreshToken) => {
+    try {
+      const response = await api.post("/auth/refresh", { refreshToken });
+      return response;
+    } catch (error) {
+      throw (
+        error.response?.data || {
+          message: "Network error or server unavailable",
+        }
+      );
+    }
+  },
+
   getGoogleLoginUrl: () => `${BACKEND_BASE_URL}/oauth2/authorization/google`,
 };
 

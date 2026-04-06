@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vn.kurisu.mentormatch.dto.request.LoginRequest;
+import vn.kurisu.mentormatch.dto.request.RefreshTokenRequest;
 import vn.kurisu.mentormatch.dto.request.RegisterRequest;
 import vn.kurisu.mentormatch.dto.response.ApiResponse;
 import vn.kurisu.mentormatch.dto.response.AuthResponse;
@@ -28,6 +29,11 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(@RequestBody @Valid LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(@RequestBody @Valid RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refreshToken(request));
     }
 
     @PostMapping("/logout")

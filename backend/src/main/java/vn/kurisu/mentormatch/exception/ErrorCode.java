@@ -18,7 +18,10 @@ public enum ErrorCode {
     ROLE_NOT_FOUND(1009, "Role not found", HttpStatus.NOT_FOUND),
     BAD_CREDENTIALS(1010, "Invalid username or password", HttpStatus.UNAUTHORIZED),
     TIME_SLOT_NOT_FOUND(1011, "Time slot not found", HttpStatus.NOT_FOUND),
-    TIME_SLOT_CONFLICT(1012, "Time slot conflict", HttpStatus.BAD_REQUEST);
+    TIME_SLOT_CONFLICT(1012, "Time slot conflict", HttpStatus.BAD_REQUEST),
+    REFRESH_TOKEN_INVALID(1013, "Refresh token is invalid", HttpStatus.UNAUTHORIZED),
+    REFRESH_TOKEN_EXPIRED(1014, "Refresh token has expired", HttpStatus.UNAUTHORIZED),
+    CHAT_MESSAGE_EMPTY(1015, "Chat message content cannot be blank", HttpStatus.BAD_REQUEST);
 
     private final int code;
     private final String message;

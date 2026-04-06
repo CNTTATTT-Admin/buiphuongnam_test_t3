@@ -20,6 +20,7 @@ export default function GoogleAuthCallbackPage() {
     const handleOAuthCallback = async () => {
       const params = new URLSearchParams(window.location.search);
       const token = params.get("token");
+      const refreshToken = params.get("refreshToken");
       const userName = params.get("userName") || "google_user";
       const callbackError = params.get("error");
 
@@ -34,7 +35,11 @@ export default function GoogleAuthCallbackPage() {
       }
 
       try {
-        const result = await loginWithGoogleTokenRef.current(token, userName);
+        const result = await loginWithGoogleTokenRef.current(
+          token,
+          userName,
+          refreshToken,
+        );
         if (cancelled) {
           return;
         }

@@ -130,6 +130,8 @@ Toi thieu nen co:
 - `DB_USERNAME`
 - `DB_PASSWORD`
 - `JWT_SECRET`
+- `JWT_EXPIRATION`
+- `JWT_REFRESH_EXPIRATION`
 - `CORS_ALLOWED_ORIGINS` (domain Vercel cua frontend)
 - `FRONTEND_PAYMENT_RESULT_URL` (vi du: `https://your-frontend.vercel.app/payment-result`)
 - `VNPAY_RETURN_URL` (vi du: `https://your-backend.onrender.com/api/payment/vnpay-return`)
@@ -178,3 +180,12 @@ File [docker-compose.yml](docker-compose.yml) chi dung de chay ha tang local (My
 - Backend khong loi CORS
 - Payment redirect ve dung trang `payment-result`
 - RabbitMQ/MySQL thong ket noi thanh cong trong log backend
+
+## 7. Realtime Chat (WebSocket STOMP)
+
+- WebSocket endpoint: `/ws` (SockJS)
+- STOMP app destination gui tin nhan: `/app/chat.private`
+- STOMP topic subscribe theo user: `/topic/private.{userId}`
+- API lay lich su hoi thoai: `GET /api/chat/conversations/{targetUserId}`
+
+Frontend route chat da co san tai `/chat`.
