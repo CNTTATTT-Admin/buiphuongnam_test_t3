@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Calendar, Home, Search, User, Wallet } from "lucide-react";
+import { Calendar, Home, Search, User, Wallet, MessageCircle } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function MobileBottomNav() {
@@ -15,6 +15,7 @@ export default function MobileBottomNav() {
   const menuItems = [
     { to: "/feed", label: "Bảng tin", icon: Home },
     { to: "/search", label: "Tìm", icon: Search },
+    { to: "/chat", label: "Chat", icon: MessageCircle },
     {
       to: isMentor ? "/schedule" : "/my-bookings",
       label: isMentor ? "Lịch dạy" : "Lịch học",

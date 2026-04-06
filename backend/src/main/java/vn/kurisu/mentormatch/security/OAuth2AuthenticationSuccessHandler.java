@@ -17,6 +17,7 @@ import vn.kurisu.mentormatch.entity.Role;
 import vn.kurisu.mentormatch.entity.User;
 import vn.kurisu.mentormatch.repository.RoleRepository;
 import vn.kurisu.mentormatch.repository.UserRepository;
+import vn.kurisu.mentormatch.service.RefreshTokenService;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -33,6 +34,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     private final PasswordEncoder passwordEncoder;
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtTokenProvider tokenProvider;
+    private final RefreshTokenService refreshTokenService;
 
     @Value("${app.oauth2.authorized-redirect-uri:http://localhost:5173/auth/google/callback}")
     private String authorizedRedirectUri;
@@ -70,9 +72,11 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         );
 
         String jwt = tokenProvider.generateToken(authToken);
+        String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
 
         String targetUrl = UriComponentsBuilder.fromUriString(authorizedRedirectUri)
                 .queryParam("token", jwt)
+                .queryParam("refreshToken", refreshToken)
                 .queryParam("userName", user.getUserName())
                 .build(true)
                 .toUriString();

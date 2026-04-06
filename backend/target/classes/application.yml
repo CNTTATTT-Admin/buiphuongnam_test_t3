@@ -60,6 +60,7 @@ app:
   jwt:
     secret: ${JWT_SECRET:replace_me_with_at_least_32_bytes_secret_for_hs256_local_dev_123456}
     expiration: ${JWT_EXPIRATION:3600000}
+    refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
   cloudinary:
     cloud_name: ${CLOUDINARY_CLOUD_NAME:}
     api_key: ${CLOUDINARY_API_KEY:}

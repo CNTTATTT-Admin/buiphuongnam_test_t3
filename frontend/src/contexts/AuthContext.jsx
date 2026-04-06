@@ -92,6 +92,7 @@ export function AuthProvider({ children }) {
           role: role,
           avatar: `https://i.pravatar.cc/150?u=${userName}`,
           token: token,
+          refreshToken: response.result.refreshToken,
         };
 
         // Set immediately to allow requests within the same tick to pick up the token
@@ -139,6 +140,7 @@ export function AuthProvider({ children }) {
   const loginWithGoogleToken = async (
     token,
     fallbackUserName = "google_user",
+    refreshToken = null,
   ) => {
     if (!token) {
       return {
@@ -154,6 +156,7 @@ export function AuthProvider({ children }) {
       role: resolveRole(fallbackUserName, []),
       avatar: `https://i.pravatar.cc/150?u=${fallbackUserName}`,
       token,
+      refreshToken,
     };
 
     setUser(userData);

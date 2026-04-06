@@ -28,6 +28,7 @@ import MyProfilePage from "./pages/MyProfilePage";
 import PaymentResultPage from "./pages/PaymentResultPage";
 import LandingPage from "./pages/LandingPage";
 import GoogleAuthCallbackPage from "./pages/GoogleAuthCallbackPage";
+import ChatPage from "./pages/ChatPage";
 import { useAuth } from "./contexts/AuthContext";
 
 // Root component to redirect authenticated users
@@ -147,6 +148,21 @@ export default function App() {
                     <Sidebar />
                     <div className="min-w-0 flex-1">
                       <MenteeBookingsPage />
+                    </div>
+                  </div>
+                </div>
+              </UserLayout>
+            }
+          />
+          <Route
+            path="/chat"
+            element={
+              <UserLayout>
+                <div className="container mx-auto px-4 py-8">
+                  <div className="flex flex-col gap-4 md:flex-row md:gap-8">
+                    <Sidebar />
+                    <div className="min-w-0 flex-1">
+                      <ChatPage />
                     </div>
                   </div>
                 </div>

@@ -1,5 +1,13 @@
 import React from "react";
-import { Home, Search, Calendar, Settings, Wallet, User } from "lucide-react";
+import {
+  Home,
+  Search,
+  Calendar,
+  Settings,
+  Wallet,
+  User,
+  MessageCircle,
+} from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { NavLink } from "react-router-dom";
 
@@ -27,6 +35,11 @@ export default function Sidebar() {
       icon: Calendar,
       label: "Lịch học",
       to: "/my-bookings",
+    },
+    {
+      icon: MessageCircle,
+      label: "Tin nhắn",
+      to: "/chat",
     },
     // Only show Mentor items if user has Mentor role
     ...(isMentor

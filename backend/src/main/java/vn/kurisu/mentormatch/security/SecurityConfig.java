@@ -91,6 +91,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers("/ws/**", "/ws-sockjs/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         // Cho phép VNPay callback không cần JWT
                         .requestMatchers("/api/payment/vnpay-return").permitAll()
